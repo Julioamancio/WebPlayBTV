@@ -86,3 +86,27 @@ class ChannelResponse(ChannelBase):
     
     class Config:
         from_attributes = True
+
+# Adicionais para operações
+class DeviceUnbind(BaseModel):
+    id: int
+
+class DeviceHeartbeat(BaseModel):
+    device_id: str
+# Playlist schemas
+class M3UPlaylistResponse(BaseModel):
+    id: int
+    name: str
+    url: Optional[str] = None
+    content: Optional[str] = None
+    channels_count: int
+    last_updated: Optional[datetime]
+    is_active: bool
+    created_at: datetime
+    class Config:
+        from_attributes = True
+
+class M3UPlaylistUpdate(BaseModel):
+    name: Optional[str] = None
+    url: Optional[str] = None
+    is_active: Optional[bool] = None

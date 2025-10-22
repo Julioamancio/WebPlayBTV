@@ -3,42 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebPlay BTV</title>
+    <title>WebPlay JTV</title>
     <style>
+        :root{--bg:#0a0a0f;--panel:#121212;--card:#181818;--border:#2a2a2a;--accent1:#e11d48;--accent2:#b91c1c;--text:#fff;--muted:#a0a0a0}
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f23; color: #fff; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .header h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .header p { color: #888; font-size: 1.1rem; }
-        .card { background: #1a1a2e; border-radius: 12px; padding: 30px; margin-bottom: 20px; border: 1px solid #333; }
-        .btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: transform 0.2s; }
-        .btn:hover { transform: translateY(-2px); }
-        .status { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-        .status-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .status-online { background: #4ade80; }
-        .status-offline { background: #f87171; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        label { display: block; color: #bbb; font-size: 0.9rem; margin-bottom: 6px; }
-        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #11122a; color: #fff; }
-        .muted { color: #aaa; font-size: 0.9rem; }
-        .pill { display: inline-block; border: 1px solid #333; border-radius: 100px; padding: 6px 10px; color: #aaa; font-size: 0.85rem; }
-        .actions { display: flex; gap: 10px; }
+        body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+        .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 2.2rem; margin-bottom: 6px; background: linear-gradient(45deg, var(--accent1), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: var(--muted); font-size: 1rem; }
+        .card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border); box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+        .btn { background: linear-gradient(45deg, var(--accent1), var(--accent2)); color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-size: .95rem; transition: transform .2s, box-shadow .2s; }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(225,29,72,.3); }
+        .status { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .status-online { background: #22c55e; }
+        .status-offline { background: #ef4444; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        label { display: block; color: #d0d0d0; font-size: 0.9rem; margin-bottom: 6px; }
+        input, select { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); }
+        .muted { color: var(--muted); font-size: 0.9rem; }
+        .pill { display: inline-block; border: 1px solid var(--border); border-radius: 100px; padding: 6px 10px; color: var(--muted); font-size: 0.85rem; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; }
         .small { font-size: 0.9rem; }
-        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
-        .list { margin-top: 12px; }
-        .list li { margin: 4px 0; color: #bbb; }
-    </style>
+        .mono { font-family: ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace; }
+        .list { margin-top: 12px; list-style: none; }
+        .list li { margin: 6px 0; color: #d6d6e6; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.03); }
+        .list li:hover{background: rgba(255,255,255,.06)}
+        /* Home tiles */
+        .home-grid{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:14px}
+        .tile{background:#141414;border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:8px;align-items:flex-start;transition:transform .15s,box-shadow .15s}
+        .tile:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.4)}
+        .tile .icon{font-size:24px;background:linear-gradient(45deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .tile .label{font-weight:700}
+        /* Live */
+        .live-layout{display:grid;grid-template-columns:280px 1fr;gap:12px}
+        .live-sidebar{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
+        .live-stage{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
+        .live-channel{cursor:pointer;display:flex;align-items:center;gap:8px}
+        .live-channel.active{outline:2px solid var(--accent1); background: rgba(225,29,72,.12)}
+        /* Visibility control */
+        .section{display:none}
+        .section.active{display:block}
+        /* Scrollbar */
+        ::-webkit-scrollbar{width:10px;height:10px}
+        ::-webkit-scrollbar-track{background:#0c0d0f}
+        ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:10px}
+     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>WebPlay BTV</h1>
-            <p>Plataforma IPTV com licenças por dispositivo</p>
+            <h1>WebPlay JTC</h1>
+            <p>Assista ao que você gosta, do seu jeito.</p>
         </div>
 
-        <div class="card">
+        <div id="section-home" class="card section active">
+            <h3>Menu</h3>
+            <div class="home-grid" style="margin-top:10px;">
+                <div class="tile" onclick="setSection('live')">
+                    <div class="icon">📺</div>
+                    <div class="label">Live TV</div>
+                    <div class="muted">Canais ao vivo</div>
+                </div>
+                <div class="tile" onclick="setSection('movies')">
+                    <div class="icon">🎬</div>
+                    <div class="label">Filmes</div>
+                    <div class="muted">Em desenvolvimento</div>
+                </div>
+                <div class="tile" onclick="setSection('series')">
+                    <div class="icon">📽️</div>
+                    <div class="label">Séries</div>
+                    <div class="muted">Em desenvolvimento</div>
+                </div>
+                <div class="tile" onclick="setSection('settings')">
+                    <div class="icon">⚙️</div>
+                    <div class="label">Configurações</div>
+                    <div class="muted">Login, licenças, playlists</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="section-settings" class="section card">
             <div class="status">
                 <div class="status-dot" id="api-status"></div>
                 <span>Status da API: <span id="api-text">Verificando...</span></span>
@@ -46,10 +93,11 @@
             <div class="actions">
                 <button class="btn" onclick="checkAPI()">Testar Conexão</button>
                 <span class="pill">Backend: <span class="mono">http://localhost:8000</span></span>
+                <button class="btn" onclick="setSection('home')">Voltar ao Menu</button>
             </div>
         </div>
 
-        <div class="card">
+        <div class="card section" id="auth-card" data-section="settings">
             <h3>🔐 Autenticação (teste rápido)</h3>
             <p class="muted">Use para validar o fluxo de registro/login da API.</p>
             <div class="row" style="margin-top: 16px;">
@@ -71,14 +119,16 @@
                     <button class="btn" onclick="registerUser()">Registrar</button>
                     <button class="btn" onclick="loginUser()">Login</button>
                     <button class="btn" onclick="getProfile()">Meu Perfil</button>
+                    <button class="btn" onclick="logoutUser()">Logout</button>
+                    <button class="btn" onclick="setSection('home')">Menu</button>
                 </div>
             </div>
             <p id="auth-msg" class="muted" style="margin-top: 12px;"></p>
             <p id="token-msg" class="muted small mono" style="margin-top: 6px;"></p>
         </div>
 
-        <div class="grid">
-            <div class="card">
+        <div class="grid section" id="settings-grid" data-section="settings">
+            <div class="card requires-auth">
                 <h3>🎫 Licenças</h3>
                 <p class="muted">Emita uma licença para sua conta e liste as suas.</p>
                 <div class="row" style="margin-top: 16px;">
@@ -98,11 +148,21 @@
                     <button class="btn" onclick="issueLicense()">Emitir Licença</button>
                     <button class="btn" onclick="listMyLicenses()">Listar Minhas Licenças</button>
                 </div>
+                <div class="row" style="margin-top: 16px;">
+                    <div>
+                        <label>ID da Licença</label>
+                        <input id="toggle_license_id" type="number" placeholder="ID da licença" />
+                    </div>
+                    <div class="actions" style="align-items: end;">
+                        <button class="btn" onclick="deactivateLicense()">Desativar</button>
+                        <button class="btn" onclick="activateLicense()">Ativar</button>
+                    </div>
+                </div>
                 <ul id="licenses-list" class="list"></ul>
                 <p id="licenses-msg" class="muted"></p>
             </div>
             
-            <div class="card">
+            <div class="card requires-auth">
                 <h3>📱 Dispositivos</h3>
                 <p class="muted">Vincule um dispositivo a uma licença.</p>
                 <div class="row" style="margin-top: 16px;">
@@ -125,213 +185,463 @@
                         <button class="btn" onclick="listMyDevices()">Listar Meus Dispositivos</button>
                     </div>
                 </div>
+                <div class="row" style="margin-top: 16px;">
+                    <div>
+                        <label>ID Interno do Dispositivo</label>
+                        <input id="unbind_device_id" type="number" placeholder="id=123" />
+                    </div>
+                    <div class="actions" style="align-items: end;">
+                        <button class="btn" onclick="unbindDevice()">Desvincular</button>
+                        <button class="btn" onclick="heartbeatDevice()">Heartbeat</button>
+                    </div>
+                </div>
                 <ul id="devices-list" class="list"></ul>
                 <p id="devices-msg" class="muted"></p>
             </div>
             
-            <div class="card">
+            <div class="card requires-auth">
                 <h3>📺 Catálogo M3U</h3>
-                <p>Ingestão e normalização de playlists</p>
-                <small>Em desenvolvimento...</small>
+                <p>Importe sua playlist, depois navegue em “Live TV”.</p>
+                <p class="muted">Informe URL ou cole o conteúdo; após importar, use o painel Live TV abaixo.</p>
+                <div class="row" style="margin-top: 16px;">
+                    <div>
+                        <label>Nome da Playlist</label>
+                        <input id="m3u_name" type="text" placeholder="Minha lista" />
+                    </div>
+                    <div>
+                        <label>URL da Playlist (opcional)</label>
+                        <input id="m3u_url" type="text" placeholder="https://exemplo.com/lista.m3u" />
+                    </div>
+                </div>
+                <div style="margin-top: 16px;">
+                    <label>Conteúdo M3U (opcional)</label>
+                    <textarea id="m3u_content" rows="6" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text);" placeholder="#EXTM3U\n#EXTINF:-1 tvg-logo=\"...\" group-title=\"...\", Canal X\nhttp://...\n..."></textarea>
+                </div>
+                <div class="actions" style="margin-top: 12px;">
+                    <button class="btn" onclick="ingestM3U()">Importar/Inserir M3U</button>
+                    <button class="btn" onclick="listChannels()">Carregar no Live TV</button>
+                    <div class="card" id="playlists-card">
+                      <h3>📚 Playlists salvas</h3>
+                      <div class="actions" style="margin-bottom:8px">
+                        <button class="btn" onclick="listPlaylists()">Atualizar</button>
+                      </div>
+                      <p id="playlists-msg" class="muted">Carregue para ver suas playlists.</p>
+                      <ul id="playlists-list" class="list" style="max-height:260px;overflow:auto"></ul>
+                    </div>
+                </div>
+                <p id="channels-msg" class="muted"></p>
+                <ul id="playlists-list" class="list"></ul>
+                <p id="playlists-msg" class="muted"></p>
             </div>
-            
-            <div class="card">
-                <h3>💳 Pagamentos</h3>
-                <p>Integração com Stripe</p>
-                <small>Em desenvolvimento...</small>
+        </div>
+
+        <div class="card requires-auth section" id="live-tv">
+            <h3>📺 Live TV</h3>
+            <div class="actions" style="margin-bottom:8px">
+                <button class="btn" onclick="setSection('home')">Menu</button>
+                <button class="btn" onclick="listChannels()">Atualizar Lista</button>
             </div>
+            <div class="live-layout">
+                <div class="live-sidebar">
+                    <div style="font-weight:700;margin-bottom:6px;">Categorias</div>
+                    <ul id="live-categories" class="list" style="max-height:160px;overflow:auto"></ul>
+                    <div style="font-weight:700;margin:10px 0 6px;">Canais</div>
+                    <input id="live-search" type="text" placeholder="Buscar canais..." />
+                    <ul id="live-channels" class="list" style="max-height:380px;overflow:auto"></ul>
+                </div>
+                <div class="live-stage">
+                    <video id="video-player" controls autoplay playsinline style="width:100%;height:360px;background:#000;border-radius:8px;"></video>
+                    <div id="player-title" style="margin-top:8px;font-weight:600;"></div>
+                    <p id="player-msg" class="muted"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card section" id="section-movies">
+            <h3>🎬 Filmes</h3>
+            <div class="actions" style="margin-bottom:8px">
+                <button class="btn" onclick="setSection('home')">Menu</button>
+                <button class="btn" onclick="loadSectionCatalog('movies')">Atualizar Lista</button>
+            </div>
+            <div class="live-layout">
+                <div class="live-sidebar">
+                    <div style="font-weight:700;margin-bottom:6px;">Categorias</div>
+                    <ul id="movies-categories" class="list" style="max-height:160px;overflow:auto"></ul>
+                    <div style="font-weight:700;margin:10px 0 6px;">Filmes</div>
+                    <input id="movies-search" type="text" placeholder="Buscar filmes..." />
+                    <ul id="movies-items" class="list" style="max-height:380px;overflow:auto"></ul>
+                </div>
+                <div class="live-stage">
+                    <video id="video-movies" controls autoplay playsinline style="width:100%;height:360px;background:#000;border-radius:8px;"></video>
+                    <div id="movies-title" style="margin-top:8px;font-weight:600;"></div>
+                    <p id="movies-msg" class="muted"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card section" id="section-series">
+            <h3>📽️ Séries</h3>
+            <div class="actions" style="margin-bottom:8px">
+                <button class="btn" onclick="setSection('home')">Menu</button>
+                <button class="btn" onclick="loadSectionCatalog('series')">Atualizar Lista</button>
+            </div>
+            <div class="live-layout">
+                <div class="live-sidebar">
+                    <div style="font-weight:700;margin-bottom:6px;">Categorias</div>
+                    <ul id="series-categories" class="list" style="max-height:160px;overflow:auto"></ul>
+                    <div style="font-weight:700;margin:10px 0 6px;">Episódios</div>
+                    <input id="series-search" type="text" placeholder="Buscar séries..." />
+                    <ul id="series-items" class="list" style="max-height:380px;overflow:auto"></ul>
+                </div>
+                <div class="live-stage">
+                    <video id="video-series" controls autoplay playsinline style="width:100%;height:360px;background:#000;border-radius:8px;"></video>
+                    <div id="series-title" style="margin-top:8px;font-weight:600;"></div>
+                    <p id="series-msg" class="muted"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card requires-auth section" id="section-payments" data-section="settings">
+            <h3>💳 Configurações adicionais</h3>
+            <p class="muted">Integrações e pagamentos: em desenvolvimento.</p>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
+        // Catálogo e reprodução por categoria
         const API_URL = 'http://localhost:8000';
-
+        let _hls = null;
+        
+        function getToken(){ return localStorage.getItem('access_token'); }
+        function getRefreshToken(){ return localStorage.getItem('refresh_token'); }
+        function setTokens(access, refresh){ if(access) localStorage.setItem('access_token', access); if(refresh) localStorage.setItem('refresh_token', refresh); }
+        
+        async function refreshAccessToken(){
+          const rt = getRefreshToken();
+          if(!rt) return null;
+          try{
+            const res = await fetch(`${API_URL}/auth/refresh`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ refresh_token: rt }) });
+            const data = await res.json();
+            if(!res.ok) return null;
+            setTokens(data.access_token, data.refresh_token);
+            const msg = document.getElementById('auth-msg'); if(msg) msg.textContent = 'Sessão renovada';
+            return data.access_token;
+          }catch(_){ return null; }
+        }
+        
+        async function apiFetch(url, options={}, requireAuth=false){
+          let opts = { ...options, headers: { ...(options.headers||{}) } };
+          if(requireAuth){
+            const token = getToken();
+            if(!token) throw new Error('Faça login para continuar');
+            opts.headers['Authorization'] = `Bearer ${token}`;
+          }
+          let res = await fetch(url, opts);
+          if(res.status === 401 && requireAuth){
+            const newToken = await refreshAccessToken();
+            if(newToken){
+              opts.headers['Authorization'] = `Bearer ${newToken}`;
+              res = await fetch(url, opts);
+            }
+          }
+          return res;
+        }
+        function normalizeChannelUrl(url) {
+          try {
+            const u = new URL(url);
+            const parts = u.pathname.split('/').filter(Boolean);
+            if (parts.length >= 3) {
+              const user = parts[0], pass = parts[1], id = parts[2].replace(/\.\w+$/, '');
+              return `${u.origin}/live/${user}/${pass}/${id}.m3u8`;
+            }
+          } catch (e) {}
+          if (/\.ts$/i.test(url)) return url.replace(/\.ts$/i, '.m3u8');
+          if (!/\.m3u8$/i.test(url)) return url + '.m3u8';
+          return url;
+        }
+        function candidateUrls(ch) {
+          const orig = ch.url;
+          const cand = [];
+          try {
+            const u = new URL(orig);
+            const p = u.pathname.split('/').filter(Boolean);
+            const id = (p[2] || '').replace(/\.\w+$/, '');
+            if (p.length >= 3 && id) {
+              const user = p[0], pass = p[1];
+              cand.push(`${u.origin}/live/${user}/${pass}/${id}.m3u8`);
+              cand.push(`${u.origin}/hls/${user}/${pass}/${id}.m3u8`);
+              cand.push(`${u.origin}/live/${user}/${pass}/${id}.ts`);
+            }
+          } catch (e) {}
+          cand.push(normalizeChannelUrl(orig));
+          cand.push(orig);
+          return [...new Set(cand)];
+        }
+        function playChannelFor(section, ch) {
+          const map = { live:{video:'video-player', title:'player-title', msg:'player-msg'}, movies:{video:'video-movies', title:'movies-title', msg:'movies-msg'}, series:{video:'video-series', title:'series-title', msg:'series-msg'} };
+          const video = document.getElementById(map[section].video);
+          const title = document.getElementById(map[section].title);
+          const msg = document.getElementById(map[section].msg);
+          if (!video) return;
+          title.textContent = ch.name;
+          const urls = candidateUrls(ch);
+          let idx = 0;
+          function tryNext(){
+            if (idx >= urls.length) { msg.textContent = 'Falha ao reproduzir.'; return; }
+            const src = urls[idx++];
+            msg.textContent = `Carregando stream... (${idx}/${urls.length})`;
+            try {
+              if (window.Hls && window.Hls.isSupported()) {
+                if (_hls) { _hls.destroy(); _hls = null; }
+                _hls = new Hls({ maxBufferLength: 30 });
+                _hls.loadSource(src);
+                _hls.attachMedia(video);
+                _hls.on(Hls.Events.ERROR, function(_, data){
+                  if (data && (data.type === 'networkError' || data.details === 'manifestLoadError')) { tryNext(); return; }
+                  msg.textContent = `Erro no player: ${data.details || data.type}`;
+                });
+                video.play().catch(()=>{});
+              } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = src; video.play().catch(()=>{});
+              } else {
+                video.src = src; video.play().catch(()=>{});
+              }
+            } catch(e){ tryNext(); }
+          }
+          tryNext();
+        }
+        
+        async function fetchChannelsCache(){
+          if (window._channels) return window._channels;
+          const token = getToken();
+          if (!token) { return []; }
+          const res = await apiFetch(`${API_URL}/catalog/channels`, {}, true);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || 'Erro ao listar canais');
+          window._channels = data;
+          return data;
+        }
+        function inferType(ch){
+          const cat = (ch.category || '').toLowerCase();
+          const url = (ch.url || '').toLowerCase();
+          const isMovie = /(filme|filmes|movie|movies|cinema|vod)/.test(cat) || /\.(mp4|mkv|avi)$/.test(url) || /\/movie\//.test(url);
+          const isSeries = /(série|series|seriados|tv shows)/.test(cat) || /\/series\//.test(url) || /\/serie\//.test(url);
+          if (isMovie) return 'movies';
+          if (isSeries) return 'series';
+          return 'live';
+        }
+        async function loadSectionCatalog(section){
+          const msgElMap = { live: 'channels-msg', movies: 'movies-msg', series: 'series-msg' };
+          const catsIdMap = { live: 'live-categories', movies: 'movies-categories', series: 'series-categories' };
+          const itemsIdMap = { live: 'live-channels', movies: 'movies-items', series: 'series-items' };
+          const searchIdMap = { live: 'live-search', movies: 'movies-search', series: 'series-search' };
+        
+          const msgEl = document.getElementById(msgElMap[section]) || { textContent: '' };
+          const catsEl = document.getElementById(catsIdMap[section]);
+          const itemsEl = document.getElementById(itemsIdMap[section]);
+          const searchEl = document.getElementById(searchIdMap[section]);
+        
+          try {
+            msgEl.textContent = 'Carregando...';
+            const channels = await fetchChannelsCache();
+            if (!channels || channels.length === 0) { msgEl.textContent = 'Faça login e importe uma playlist.'; return; }
+        
+            const filtered = channels.filter(ch => inferType(ch) === section);
+            const counts = {};
+            filtered.forEach(c => { const g = c.category || 'Sem categoria'; counts[g] = (counts[g] || 0) + 1; });
+            catsEl.innerHTML = '';
+            Object.entries(counts).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([cat,count])=>{
+              const li = document.createElement('li');
+              li.textContent = `${cat} (${count})`;
+              li.style.cursor = 'pointer';
+              li.onclick = () => { window._currentCat = { ...window._currentCat, [section]: cat }; applyFilter(); };
+              catsEl.appendChild(li);
+            });
+        
+            function applyFilter() {
+              const q = (searchEl?.value || '').toLowerCase();
+              const cat = window._currentCat?.[section] || '';
+              const list = filtered.filter(c => {
+                const byText = !q || c.name.toLowerCase().includes(q) || (c.category || '').toLowerCase().includes(q);
+                const byCat = !cat || (c.category || 'Sem categoria') === cat;
+                return byText && byCat;
+              });
+              renderItems(list);
+            }
+        
+            function renderItems(list) {
+              itemsEl.innerHTML = '';
+              list.forEach(c => {
+                const li = document.createElement('li');
+                li.className = 'live-channel';
+                li.innerHTML = `<span style="display:inline-block;width:18px;height:18px;border-radius:2px;background:#e11d48;margin-right:8px;vertical-align:middle"></span><span>${c.name}</span>`;
+                li.onclick = () => playChannelFor(section, c);
+                itemsEl.appendChild(li);
+              });
+              msgEl.textContent = `Total: ${list.length}`;
+            }
+        
+            if (searchEl) searchEl.oninput = applyFilter;
+            applyFilter();
+          } catch (e) {
+            msgEl.textContent = `Erro: ${e.message}`;
+          }
+        }
+        function listChannels(){ loadSectionCatalog('live'); }
+        
+        // Ingestão M3U
+        async function ingestM3U() {
+          const token = getToken();
+          const name = document.getElementById('m3u_name').value || 'Playlist';
+          const url = document.getElementById('m3u_url').value || null;
+          const content = document.getElementById('m3u_content').value || null;
+          const msg = document.getElementById('channels-msg');
+          const btn = document.querySelector('button.btn:nth-of-type(1)'); // botão "Importar/Inserir M3U"
+          if (!token) { msg.textContent = 'Faça login primeiro'; return; }
+          if (!url && !content) { msg.textContent = 'Informe URL ou cole o conteúdo'; return; }
+          // loading state
+          const original = btn ? btn.textContent : '';
+          if (btn) { btn.disabled = true; btn.textContent = 'Carregando...'; }
+          msg.textContent = 'Baixando e processando a lista M3U...';
+          try {
+            const params = new URLSearchParams(); params.append('name', name); if (url) params.append('url', url); if (content) params.append('content', content);
+            const res = await apiFetch(`${API_URL}/catalog/m3u/ingest?${params.toString()}`, { method: 'POST' }, true);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.detail || 'Erro na ingestão');
+            msg.textContent = `Playlist salva com sucesso. Canais ingeridos: ${data.length}`;
+            window._channels = null; // recarregar cache
+            loadSectionCatalog('live');
+            listPlaylists();
+          } catch (e) {
+            msg.textContent = `Erro: ${e.message}`;
+          } finally {
+            if (btn) { btn.disabled = false; btn.textContent = original; }
+          }
+        }
+        
+        async function listPlaylists(){
+          const token = getToken();
+          const msg = document.getElementById('playlists-msg');
+          const ul = document.getElementById('playlists-list');
+          if (!token) { msg.textContent = 'Faça login para ver suas playlists.'; return; }
+          msg.textContent = 'Carregando playlists...';
+          ul.innerHTML = '';
+          try {
+            const res = await apiFetch(`${API_URL}/catalog/playlists`, {}, true);
+            const items = await res.json();
+            if (!res.ok) throw new Error(items.detail || 'Erro ao listar playlists');
+            if (!items || items.length === 0) { msg.textContent = 'Nenhuma playlist salva.'; return; }
+            msg.textContent = `Total: ${items.length}`;
+            items.forEach(p => {
+              const li = document.createElement('li');
+              li.innerHTML = `
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                  <div style="flex:1;">
+                    <div style="font-weight:600;">${p.name}</div>
+                    <div class="muted" style="font-size:12px;">${p.url ? 'Remota' : 'Local'} • Canais: ${p.channels_count} • Atualizada: ${p.last_updated || '-'}</div>
+                  </div>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn" style="padding:6px 10px" onclick="editPlaylist(${p.id})">Editar</button>
+                    <button class="btn" style="padding:6px 10px;background:#991b1b" onclick="deletePlaylist(${p.id})">Excluir</button>
+                  </div>
+                </div>`;
+              ul.appendChild(li);
+            });
+          } catch(e) {
+            msg.textContent = `Erro: ${e.message}`;
+          }
+        }
+        async function editPlaylist(id){
+          const token = getToken(); if(!token) return;
+          const newName = prompt('Novo nome da playlist:');
+          const newUrl = prompt('Nova URL da playlist (opcional):');
+          if (newName === null && newUrl === null) return;
+          try {
+            const payload = {}; if (newName) payload.name = newName; if (newUrl) payload.url = newUrl;
+            const res = await apiFetch(`${API_URL}/catalog/playlists/${id}`, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }, true);
+            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao editar playlist');
+            listPlaylists();
+          } catch(e){ alert(e.message); }
+        }
+        async function deletePlaylist(id){
+          const token = getToken(); if(!token) return;
+          if(!confirm('Excluir esta playlist? Isso remove apenas o registro, não os canais já ingeridos.')) return;
+          try {
+            const res = await apiFetch(`${API_URL}/catalog/playlists/${id}`, { method:'DELETE' }, true);
+            if(!res.ok){ const data = await res.json(); throw new Error(data.detail || 'Erro ao excluir'); }
+            listPlaylists();
+          } catch(e){ alert(e.message); }
+        }
+        
+        // API status e auth básico
         function setStatus(online) {
-            const statusDot = document.getElementById('api-status');
-            const statusText = document.getElementById('api-text');
-            statusDot.className = 'status-dot ' + (online ? 'status-online' : 'status-offline');
-            statusText.textContent = online ? 'Online' : 'Offline';
+          const dot = document.getElementById('api-status');
+          const text = document.getElementById('api-text');
+          if (!dot || !text) return;
+          dot.className = 'status-dot ' + (online ? 'status-online' : 'status-offline');
+          text.textContent = online ? 'Online' : 'Offline';
         }
-
         async function checkAPI() {
+          try {
+            const res = await fetch(`${API_URL}/health`);
+            let ok = false;
             try {
-                const response = await fetch(`${API_URL}/health`);
-                const data = await response.json();
-                setStatus(data.status === 'ok');
-            } catch (error) {
-                console.error('Erro ao conectar com a API:', error);
-                setStatus(false);
+              const data = await res.json();
+              ok = data && (data.status === 'ok' || data.status === 'healthy');
+            } catch (_) {
+              ok = res.ok; // se não for JSON, usa o status HTTP
             }
+            setStatus(ok);
+          } catch (e) {
+            setStatus(false);
+          }
         }
-
-        async function registerUser() {
-            const email = document.getElementById('email').value;
-            const full_name = document.getElementById('full_name').value;
-            const password = document.getElementById('password').value;
-            const msg = document.getElementById('auth-msg');
-            const tokenMsg = document.getElementById('token-msg');
-            msg.textContent = 'Registrando...'; tokenMsg.textContent = '';
-
-            try {
-                const res = await fetch(`${API_URL}/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, full_name, password })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Erro ao registrar');
-                msg.textContent = `Registrado: ${data.email}`;
-            } catch (e) {
-                msg.textContent = `Erro: ${e.message}`;
-            }
+        function updateAuthUI(){ /* opcional para destacar UI quando logado */ }
+        function logoutUser(){ localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); updateAuthUI(); document.getElementById('auth-msg').textContent = 'Logout realizado'; document.getElementById('token-msg').textContent=''; }
+        async function registerUser(){
+          const email = document.getElementById('email').value.trim();
+          const full_name = document.getElementById('full_name').value.trim();
+          const password = document.getElementById('password').value;
+          const msg = document.getElementById('auth-msg'); const tokenMsg = document.getElementById('token-msg'); msg.textContent='Registrando...'; tokenMsg.textContent='';
+          try {
+            const res = await fetch(`${API_URL}/auth/register`, { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, full_name, password }) });
+            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao registrar'); msg.textContent = `Registrado: ${data.email}`;
+          } catch(e){ msg.textContent = `Erro: ${e.message}`; }
         }
-
-        async function loginUser() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const msg = document.getElementById('auth-msg');
-            const tokenMsg = document.getElementById('token-msg');
-            msg.textContent = 'Logando...'; tokenMsg.textContent = '';
-
-            try {
-                const res = await fetch(`${API_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
-                localStorage.setItem('access_token', data.access_token);
-                localStorage.setItem('refresh_token', data.refresh_token);
-                msg.textContent = 'Login realizado com sucesso';
-                tokenMsg.textContent = `access_token: ${data.access_token.slice(0, 24)}...`;
-            } catch (e) {
-                msg.textContent = `Erro: ${e.message}`;
-            }
+        async function loginUser(){
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
+          const msg = document.getElementById('auth-msg'); const tokenMsg = document.getElementById('token-msg'); msg.textContent='Logando...'; tokenMsg.textContent='';
+          try {
+            const res = await fetch(`${API_URL}/auth/login`, { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
+            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
+            localStorage.setItem('access_token', data.access_token); localStorage.setItem('refresh_token', data.refresh_token); msg.textContent='Login realizado'; tokenMsg.textContent = `access_token: ${data.access_token.slice(0,24)}...`; updateAuthUI();
+          } catch(e){ msg.textContent = `Erro: ${e.message}`; }
         }
-
-        async function getProfile() {
-            const token = localStorage.getItem('access_token');
-            const msg = document.getElementById('auth-msg');
-            const tokenMsg = document.getElementById('token-msg');
-            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
-
-            try {
-                const res = await fetch(`${API_URL}/auth/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Token inválido');
-                msg.textContent = `Usuário: ${data.email}`;
-                tokenMsg.textContent = `admin=${data.is_admin} ativo=${data.is_active}`;
-            } catch (e) {
-                msg.textContent = `Erro: ${e.message}`;
-            }
+        async function getProfile(){
+          const token = localStorage.getItem('access_token'); const msg = document.getElementById('auth-msg'); const tokenMsg = document.getElementById('token-msg'); if(!token){ msg.textContent='Faça login primeiro'; return; }
+          try { const res = await apiFetch(`${API_URL}/auth/me`, { headers:{ 'Authorization': `Bearer ${token}` } }); const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Token inválido'); msg.textContent = `Usuário: ${data.email}`; tokenMsg.textContent = `admin=${data.is_admin} ativo=${data.is_active}`; }
+          catch(e){ msg.textContent = `Erro: ${e.message}`; }
         }
-
-        async function issueLicense() {
-            const token = localStorage.getItem('access_token');
-            const plan_name = document.getElementById('plan_name').value;
-            const max_devices = parseInt(document.getElementById('max_devices').value, 10) || 1;
-            const msg = document.getElementById('licenses-msg');
-            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
-            msg.textContent = 'Emitindo licença...';
-            try {
-                const res = await fetch(`${API_URL}/licenses/issue`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ plan_name, max_devices })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Erro ao emitir licença');
-                msg.textContent = `Licença emitida: ${data.license_key} (id=${data.id})`;
-                await listMyLicenses();
-            } catch (e) {
-                msg.textContent = `Erro: ${e.message}`;
-            }
+        
+        // Navegação: carregar catálogos ao abrir cada seção
+        function setSection(sec){
+          document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
+          if(sec==='home'){ document.getElementById('section-home').classList.add('active'); }
+          if(sec==='settings'){
+            document.getElementById('section-settings').classList.add('active');
+            document.getElementById('auth-card').classList.add('active');
+            document.getElementById('settings-grid').classList.add('active');
+            document.getElementById('section-payments').classList.add('active');
+          }
+          if(sec==='live'){ document.getElementById('live-tv').classList.add('active'); loadSectionCatalog('live'); }
+          if(sec==='movies'){ document.getElementById('section-movies').classList.add('active'); loadSectionCatalog('movies'); }
+          if(sec==='series'){ document.getElementById('section-series').classList.add('active'); loadSectionCatalog('series'); }
         }
-
-        async function listMyLicenses() {
-            const token = localStorage.getItem('access_token');
-            const list = document.getElementById('licenses-list');
-            const msg = document.getElementById('licenses-msg');
-            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
-            msg.textContent = 'Carregando licenças...';
-            try {
-                const res = await fetch(`${API_URL}/licenses/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Erro ao listar licenças');
-                list.innerHTML = '';
-                data.forEach(l => {
-                    const li = document.createElement('li');
-                    li.textContent = `id=${l.id} key=${l.license_key} plano=${l.plan_name} max=${l.max_devices} ativo=${l.is_active}`;
-                    list.appendChild(li);
-                });
-                msg.textContent = `Total: ${data.length}`;
-            } catch (e) {
-                msg.textContent = `Erro: ${e.message}`;
-            }
-        }
-
-        async function bindDevice() {
-            const token = localStorage.getItem('access_token');
-            const license_id = parseInt(document.getElementById('bind_license_id').value, 10);
-            const device_id = document.getElementById('bind_device_id').value || `dev-${Math.random().toString(36).slice(2, 8)}`;
-            const device_name = document.getElementById('bind_device_name').value;
-            const list = document.getElementById('devices-list');
-            const msg = document.getElementById('devices-msg');
-            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
-            if (!license_id) { msg.textContent = 'Informe o ID da licença'; return; }
-            msg.textContent = 'Vinculando dispositivo...';
-            try {
-                const res = await fetch(`${API_URL}/devices/bind`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ license_id, device_id, device_name })
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Erro ao vincular dispositivo');
-                msg.textContent = `Dispositivo vinculado: ${data.device_id} (id=${data.id})`;
-                await listMyDevices();
-            } catch (e) {
-                msg.textContent = `Erro: ${e.message}`;
-            }
-        }
-
-        async function listMyDevices() {
-            const token = localStorage.getItem('access_token');
-            const list = document.getElementById('devices-list');
-            const msg = document.getElementById('devices-msg');
-            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
-            msg.textContent = 'Carregando dispositivos...';
-            try {
-                const res = await fetch(`${API_URL}/devices/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || 'Erro ao listar dispositivos');
-                list.innerHTML = '';
-                data.forEach(d => {
-                    const li = document.createElement('li');
-                    li.textContent = `id=${d.id} device=${d.device_id} nome=${d.device_name || '-'} lic=${d.license_id} ativo=${d.is_active}`;
-                    list.appendChild(li);
-                });
-                msg.textContent = `Total: ${data.length}`;
-            } catch (e) {
-                msg.textContent = `Erro: ${e.message}`;
-            }
-        }
-
-        // Verificar API ao carregar
-        checkAPI();
-    </script>
+        
+        // Boot
+        checkAPI(); updateAuthUI();
+        </script>
 </body>
 </html>
