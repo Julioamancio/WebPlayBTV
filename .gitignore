@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+
+# Databases
+webplay.db
+*.sqlite3
+
+# Env files
+.env
+.env.*
+
+# Node/Frontend
+node_modules/
+frontend/dist/
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebPlay BTV</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f23; color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5rem; margin-bottom: 10px; background: linear-gradient(45deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header p { color: #888; font-size: 1.1rem; }
+        .card { background: #1a1a2e; border-radius: 12px; padding: 30px; margin-bottom: 20px; border: 1px solid #333; }
+        .btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: transform 0.2s; }
+        .btn:hover { transform: translateY(-2px); }
+        .status { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .status-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .status-online { background: #4ade80; }
+        .status-offline { background: #f87171; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        label { display: block; color: #bbb; font-size: 0.9rem; margin-bottom: 6px; }
+        input, select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #11122a; color: #fff; }
+        .muted { color: #aaa; font-size: 0.9rem; }
+        .pill { display: inline-block; border: 1px solid #333; border-radius: 100px; padding: 6px 10px; color: #aaa; font-size: 0.85rem; }
+        .actions { display: flex; gap: 10px; }
+        .small { font-size: 0.9rem; }
+        .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+        .list { margin-top: 12px; }
+        .list li { margin: 4px 0; color: #bbb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WebPlay BTV</h1>
+            <p>Plataforma IPTV com licenças por dispositivo</p>
+        </div>
+
+        <div class="card">
+            <div class="status">
+                <div class="status-dot" id="api-status"></div>
+                <span>Status da API: <span id="api-text">Verificando...</span></span>
+            </div>
+            <div class="actions">
+                <button class="btn" onclick="checkAPI()">Testar Conexão</button>
+                <span class="pill">Backend: <span class="mono">http://localhost:8000</span></span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>🔐 Autenticação (teste rápido)</h3>
+            <p class="muted">Use para validar o fluxo de registro/login da API.</p>
+            <div class="row" style="margin-top: 16px;">
+                <div>
+                    <label>Email</label>
+                    <input id="email" type="email" placeholder="voce@exemplo.com" />
+                </div>
+                <div>
+                    <label>Nome completo (opcional)</label>
+                    <input id="full_name" type="text" placeholder="Seu nome" />
+                </div>
+            </div>
+            <div class="row" style="margin-top: 16px;">
+                <div>
+                    <label>Senha</label>
+                    <input id="password" type="password" placeholder="••••••••" />
+                </div>
+                <div class="actions" style="align-items: end;">
+                    <button class="btn" onclick="registerUser()">Registrar</button>
+                    <button class="btn" onclick="loginUser()">Login</button>
+                    <button class="btn" onclick="getProfile()">Meu Perfil</button>
+                </div>
+            </div>
+            <p id="auth-msg" class="muted" style="margin-top: 12px;"></p>
+            <p id="token-msg" class="muted small mono" style="margin-top: 6px;"></p>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>🎫 Licenças</h3>
+                <p class="muted">Emita uma licença para sua conta e liste as suas.</p>
+                <div class="row" style="margin-top: 16px;">
+                    <div>
+                        <label>Plano</label>
+                        <select id="plan_name">
+                            <option value="basic">basic</option>
+                            <option value="premium">premium</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Máx. dispositivos</label>
+                        <input id="max_devices" type="number" min="1" max="10" value="1" />
+                    </div>
+                </div>
+                <div class="actions" style="margin-top: 12px;">
+                    <button class="btn" onclick="issueLicense()">Emitir Licença</button>
+                    <button class="btn" onclick="listMyLicenses()">Listar Minhas Licenças</button>
+                </div>
+                <ul id="licenses-list" class="list"></ul>
+                <p id="licenses-msg" class="muted"></p>
+            </div>
+            
+            <div class="card">
+                <h3>📱 Dispositivos</h3>
+                <p class="muted">Vincule um dispositivo a uma licença.</p>
+                <div class="row" style="margin-top: 16px;">
+                    <div>
+                        <label>ID da Licença</label>
+                        <input id="bind_license_id" type="number" placeholder="ID da licença" />
+                    </div>
+                    <div>
+                        <label>ID do Dispositivo</label>
+                        <input id="bind_device_id" type="text" placeholder="ex.: dev-abc123" />
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 16px;">
+                    <div>
+                        <label>Nome do Dispositivo (opcional)</label>
+                        <input id="bind_device_name" type="text" placeholder="ex.: iPhone do João" />
+                    </div>
+                    <div class="actions" style="align-items: end;">
+                        <button class="btn" onclick="bindDevice()">Vincular</button>
+                        <button class="btn" onclick="listMyDevices()">Listar Meus Dispositivos</button>
+                    </div>
+                </div>
+                <ul id="devices-list" class="list"></ul>
+                <p id="devices-msg" class="muted"></p>
+            </div>
+            
+            <div class="card">
+                <h3>📺 Catálogo M3U</h3>
+                <p>Ingestão e normalização de playlists</p>
+                <small>Em desenvolvimento...</small>
+            </div>
+            
+            <div class="card">
+                <h3>💳 Pagamentos</h3>
+                <p>Integração com Stripe</p>
+                <small>Em desenvolvimento...</small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+
+        function setStatus(online) {
+            const statusDot = document.getElementById('api-status');
+            const statusText = document.getElementById('api-text');
+            statusDot.className = 'status-dot ' + (online ? 'status-online' : 'status-offline');
+            statusText.textContent = online ? 'Online' : 'Offline';
+        }
+
+        async function checkAPI() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                setStatus(data.status === 'ok');
+            } catch (error) {
+                console.error('Erro ao conectar com a API:', error);
+                setStatus(false);
+            }
+        }
+
+        async function registerUser() {
+            const email = document.getElementById('email').value;
+            const full_name = document.getElementById('full_name').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('auth-msg');
+            const tokenMsg = document.getElementById('token-msg');
+            msg.textContent = 'Registrando...'; tokenMsg.textContent = '';
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, full_name, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao registrar');
+                msg.textContent = `Registrado: ${data.email}`;
+            } catch (e) {
+                msg.textContent = `Erro: ${e.message}`;
+            }
+        }
+
+        async function loginUser() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const msg = document.getElementById('auth-msg');
+            const tokenMsg = document.getElementById('token-msg');
+            msg.textContent = 'Logando...'; tokenMsg.textContent = '';
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('refresh_token', data.refresh_token);
+                msg.textContent = 'Login realizado com sucesso';
+                tokenMsg.textContent = `access_token: ${data.access_token.slice(0, 24)}...`;
+            } catch (e) {
+                msg.textContent = `Erro: ${e.message}`;
+            }
+        }
+
+        async function getProfile() {
+            const token = localStorage.getItem('access_token');
+            const msg = document.getElementById('auth-msg');
+            const tokenMsg = document.getElementById('token-msg');
+            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Token inválido');
+                msg.textContent = `Usuário: ${data.email}`;
+                tokenMsg.textContent = `admin=${data.is_admin} ativo=${data.is_active}`;
+            } catch (e) {
+                msg.textContent = `Erro: ${e.message}`;
+            }
+        }
+
+        async function issueLicense() {
+            const token = localStorage.getItem('access_token');
+            const plan_name = document.getElementById('plan_name').value;
+            const max_devices = parseInt(document.getElementById('max_devices').value, 10) || 1;
+            const msg = document.getElementById('licenses-msg');
+            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
+            msg.textContent = 'Emitindo licença...';
+            try {
+                const res = await fetch(`${API_URL}/licenses/issue`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plan_name, max_devices })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao emitir licença');
+                msg.textContent = `Licença emitida: ${data.license_key} (id=${data.id})`;
+                await listMyLicenses();
+            } catch (e) {
+                msg.textContent = `Erro: ${e.message}`;
+            }
+        }
+
+        async function listMyLicenses() {
+            const token = localStorage.getItem('access_token');
+            const list = document.getElementById('licenses-list');
+            const msg = document.getElementById('licenses-msg');
+            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
+            msg.textContent = 'Carregando licenças...';
+            try {
+                const res = await fetch(`${API_URL}/licenses/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao listar licenças');
+                list.innerHTML = '';
+                data.forEach(l => {
+                    const li = document.createElement('li');
+                    li.textContent = `id=${l.id} key=${l.license_key} plano=${l.plan_name} max=${l.max_devices} ativo=${l.is_active}`;
+                    list.appendChild(li);
+                });
+                msg.textContent = `Total: ${data.length}`;
+            } catch (e) {
+                msg.textContent = `Erro: ${e.message}`;
+            }
+        }
+
+        async function bindDevice() {
+            const token = localStorage.getItem('access_token');
+            const license_id = parseInt(document.getElementById('bind_license_id').value, 10);
+            const device_id = document.getElementById('bind_device_id').value || `dev-${Math.random().toString(36).slice(2, 8)}`;
+            const device_name = document.getElementById('bind_device_name').value;
+            const list = document.getElementById('devices-list');
+            const msg = document.getElementById('devices-msg');
+            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
+            if (!license_id) { msg.textContent = 'Informe o ID da licença'; return; }
+            msg.textContent = 'Vinculando dispositivo...';
+            try {
+                const res = await fetch(`${API_URL}/devices/bind`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ license_id, device_id, device_name })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao vincular dispositivo');
+                msg.textContent = `Dispositivo vinculado: ${data.device_id} (id=${data.id})`;
+                await listMyDevices();
+            } catch (e) {
+                msg.textContent = `Erro: ${e.message}`;
+            }
+        }
+
+        async function listMyDevices() {
+            const token = localStorage.getItem('access_token');
+            const list = document.getElementById('devices-list');
+            const msg = document.getElementById('devices-msg');
+            if (!token) { msg.textContent = 'Faça login primeiro'; return; }
+            msg.textContent = 'Carregando dispositivos...';
+            try {
+                const res = await fetch(`${API_URL}/devices/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Erro ao listar dispositivos');
+                list.innerHTML = '';
+                data.forEach(d => {
+                    const li = document.createElement('li');
+                    li.textContent = `id=${d.id} device=${d.device_id} nome=${d.device_name || '-'} lic=${d.license_id} ativo=${d.is_active}`;
+                    list.appendChild(li);
+                });
+                msg.textContent = `Total: ${data.length}`;
+            } catch (e) {
+                msg.textContent = `Erro: ${e.message}`;
+            }
+        }
+
+        // Verificar API ao carregar
+        checkAPI();
+    </script>
+</body>
+</html>
