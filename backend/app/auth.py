@@ -6,13 +6,14 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from .database import get_db
-from .models import User
+from .models import User, License
+import os
 
 # Configurações JWT
-SECRET_KEY = "your-secret-key-change-in-production"  # Mover para env var
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-REFRESH_TOKEN_EXPIRE_DAYS = 7
+SECRET_KEY = os.getenv("JWT_SECRET", "change-me-in-env")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
@@ -90,4 +91,10 @@ async def get_current_user(
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+# Requer pelo menos uma licença ativa para acessar catálogo
+def require_active_license(current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)):
+    has = db.query(License).filter(License.user_id == current_user.id, License.is_active == True).count()
+    if has == 0:
+        raise HTTPException(status_code=403, detail="No active license")
     return current_user

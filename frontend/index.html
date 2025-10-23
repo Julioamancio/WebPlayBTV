@@ -3,16 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebPlay JTV</title>
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>WEBplayer JTV</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
     <style>
         :root{--bg:#0a0a0f;--panel:#121212;--card:#181818;--border:#2a2a2a;--accent1:#e11d48;--accent2:#b91c1c;--text:#fff;--muted:#a0a0a0}
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+        body { font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0b0b17 0%, #3b1e5a 45%, #b43b3b 100%); color: var(--text); }
         .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
         .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { font-size: 2.2rem; margin-bottom: 6px; background: linear-gradient(45deg, var(--accent1), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header h1 { font-size: 2.2rem; margin-bottom: 6px; background: linear-gradient(45deg, var(--accent1), var(--accent2)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .brand{display:flex;align-items:center;gap:10px}
+        .brand-icon{display:inline-flex;align-items:center;justify-content:center}
+        .brand-text{font-weight:700}
         .header p { color: var(--muted); font-size: 1rem; }
-        .card { background: var(--card); border-radius: 14px; padding: 16px; margin-bottom: 16px; border: 1px solid var(--border); box-shadow: 0 6px 14px rgba(0,0,0,.35); }
+        .card { background: var(--card); border-radius: 16px; padding: 22px; margin-bottom: 18px; border: 1px solid var(--border); box-shadow: 0 8px 18px rgba(0,0,0,.40); }
         .btn { background: linear-gradient(45deg, var(--accent1), var(--accent2)); color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-size: .95rem; transition: transform .2s, box-shadow .2s; }
         .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(225,29,72,.3); }
         .status { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -29,20 +37,34 @@
         .small { font-size: 0.9rem; }
         .mono { font-family: ui-monospace, Menlo, Monaco, Consolas, 'Courier New', monospace; }
         .list { margin-top: 12px; list-style: none; }
+        .list li { margin: 6px 0; color: #d6d6e6; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.03); }
+        .list li:hover{background: rgba(255,255,255,.06)}
+        /* Cards grid for items */
+        .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+        .card-item{background:#141414;border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:transform .15s,box-shadow .15s}
+        .card-item:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.4)}
+        .card-item .thumb{width:48px;height:48px;border-radius:8px;background:#e11d48;flex-shrink:0;object-fit:cover}
+        .card-item .title{font-weight:700}
+        .card-item .meta{color:var(--muted);font-size:.9rem}
         .list li { margin: 6px 0; color: #d6d6e6; padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.03); }
         .list li:hover{background: rgba(255,255,255,.06)}
         /* Home tiles */
-        .home-grid{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:14px}
-        .tile{background:#141414;border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;display:flex;flex-direction:column;gap:8px;align-items:flex-start;transition:transform .15s,box-shadow .15s}
-        .tile:hover{transform:translateY(-2px);box-shadow:0 8px 16px rgba(0,0,0,.4)}
-        .tile .icon{font-size:24px;background:linear-gradient(45deg,var(--accent1),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-        .tile .label{font-weight:700}
+        .home-grid{display:grid;grid-template-columns:repeat(4, 220px);gap:16px;justify-content:center}
+        .tile{background:linear-gradient(180deg, rgba(190,18,60,.92), rgba(88,16,27,.92));border:1px solid #7f1d1d;border-radius:18px;padding:22px;cursor:pointer;display:flex;flex-direction:column;gap:10px;align-items:flex-start;transition:transform .15s,box-shadow .15s;box-shadow:0 12px 26px rgba(0,0,0,.50)}
+        .tile:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.55)}
+        .tile .icon{font-size:56px;color:#ffffff}
+        .tile .label{font-weight:700;font-size:1.05rem;color:#ffffff}
+        .tile .muted{color:#f0c9c9;font-size:.9rem}
+        .tile-big{grid-column:span 2;grid-row:span 2;min-height:240px}
         /* Live */
-        .live-layout{display:grid;grid-template-columns:280px 1fr;gap:12px}
-        .live-sidebar{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
-        .live-stage{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
-        .live-channel{cursor:pointer;display:flex;align-items:center;gap:8px}
+        .live-layout{display:grid;grid-template-columns:320px 1fr;gap:14px}
+        .live-sidebar{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px}
+        .live-stage{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px}
+        .live-channel{cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;background:#141414;border:1px solid var(--border)}
+        .live-channel:hover{background:#1a1a1a}
         .live-channel.active{outline:2px solid var(--accent1); background: rgba(225,29,72,.12)}
+        .list li { margin: 6px 0; color: #d6d6e6; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.03); }
+        .list li:hover{background: rgba(255,255,255,.06)}
         /* Visibility control */
         .section{display:none}
         .section.active{display:block}
@@ -50,39 +72,70 @@
         ::-webkit-scrollbar{width:10px;height:10px}
         ::-webkit-scrollbar-track{background:#0c0d0f}
         ::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:10px}
+        /* Debug panel */
+        .debug-toggle{position:fixed;left:14px;bottom:14px;background:#e11d48;color:#fff;border:none;border-radius:10px;padding:8px 12px;z-index:9999;cursor:pointer}
+        .debug-panel{position:fixed;left:14px;bottom:60px;width:420px;max-height:50vh;background:#111;border:1px solid #444;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.5);display:none;z-index:9999}
+        .debug-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #333;color:#fff}
+        .debug-body{padding:8px 12px;color:#ddd;overflow:auto}
+        .debug-body pre{white-space:pre-wrap;word-wrap:break-word;font-size:.85rem}
+        /* Password eye + remember */
+        .input-eye-group{position:relative;display:flex;align-items:center}
+        .input-eye-group input{width:100%;padding-right:38px}
+        .eye-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:none;color:#ddd;cursor:pointer;font-size:1rem}
+        .eye-btn:hover{color:#fff}
+        .remember-label{display:inline-flex;align-items:center;gap:8px;margin-top:8px;color:#bfbfbf;font-size:.95rem}
      </style>
 </head>
-<body>
+<body style="background:#0a0a0f">
+  <div id="boot-marker" style="padding:10px;background:#ffeb3b;color:#000;font-weight:600;text-align:center">Carregando app… Se ficar branco, pressione Ctrl+F5</div>
     <div class="container">
         <div class="header">
-            <h1>WebPlay JTC</h1>
+            <div class="brand" style="justify-content:center">
+              <span class="brand-icon" aria-hidden="true"><svg width="48" height="48" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e11d48"/><stop offset="1" stop-color="#b91c1c"/></linearGradient></defs><rect x="12" y="20" width="40" height="28" rx="6" fill="url(#g)" stroke="#7f1d1d" stroke-width="2"/><rect x="18" y="26" width="28" height="16" rx="3" fill="#0a0a0f"/><path d="M28 34l6 4-6 4v-8z" fill="#ffffff"/><circle cx="22" cy="16" r="3" fill="#e11d48"/><circle cx="42" cy="16" r="3" fill="#e11d48"/><path d="M22 16l-8 -6" stroke="#e11d48" stroke-width="2"/><path d="M42 16l8 -6" stroke="#e11d48" stroke-width="2"/></svg></span>
+              <h1 class="brand-text">WEBplayer JTV</h1>
+            </div>
             <p>Assista ao que você gosta, do seu jeito.</p>
         </div>
 
         <div id="section-home" class="card section active">
-            <h3>Menu</h3>
+            <div class="top-bar">
+               <div class="expiry small">A lista de reprodução atual expira: 2025-01-01</div>
+             </div>
             <div class="home-grid" style="margin-top:10px;">
-                <div class="tile" onclick="setSection('live')">
-                    <div class="icon">📺</div>
-                    <div class="label">Live TV</div>
-                    <div class="muted">Canais ao vivo</div>
-                </div>
-                <div class="tile" onclick="setSection('movies')">
-                    <div class="icon">🎬</div>
-                    <div class="label">Filmes</div>
-                    <div class="muted">Em desenvolvimento</div>
-                </div>
-                <div class="tile" onclick="setSection('series')">
-                    <div class="icon">📽️</div>
-                    <div class="label">Séries</div>
-                    <div class="muted">Em desenvolvimento</div>
-                </div>
-                <div class="tile" onclick="setSection('settings')">
-                    <div class="icon">⚙️</div>
-                    <div class="label">Configurações</div>
-                    <div class="muted">Login, licenças, playlists</div>
-                </div>
+                <div class="tile tile-big requires-auth" onclick="setSection('live')">
+                     <div class="icon"><i class="fa-solid fa-tv"></i></div>
+                     <div class="label">TV ao Vivo</div>
+                 </div>
+                <div class="tile requires-auth" onclick="setSection('movies')">
+                     <div class="icon"><i class="fa-solid fa-film"></i></div>
+                     <div class="label">Filmes</div>
+                 </div>
+                <div class="tile requires-auth" onclick="setSection('series')">
+                     <div class="icon"><i class="fa-solid fa-clapperboard"></i></div>
+                     <div class="label">Séries</div>
+                 </div>
+                <div class="tile requires-auth" onclick="setSection('settings')">
+                     <div class="icon"><i class="fa-solid fa-gear"></i></div>
+                     <div class="label">Configurações</div>
+                 </div>
+                <div class="tile requires-auth" onclick="window._channels=null; setSection('live');">
+                     <div class="icon"><i class="fa-solid fa-rotate-right"></i></div>
+                     <div class="label">Recarregar</div>
+                 </div>
+                <div class="tile" onclick="setSection('account')">
+                     <div class="icon"><i class="fa-solid fa-user"></i></div>
+                     <div class="label">Conta</div>
+                 </div>
+                <div class="tile requires-auth" onclick="setSection('playlist')">
+                     <div class="icon"><i class="fa-solid fa-list"></i></div>
+                     <div class="label">Mudar lista de reprodução</div>
+                 </div>
+                <div class="tile requires-auth" onclick="setSection('archive')">
+                     <div class="icon"><i class="fa-solid fa-folder-open"></i></div>
+                     <div class="label">Arquivo</div>
+                 </div>
             </div>
+            <div class="footer small">versão: 1.7.2.0</div>
         </div>
 
         <div id="section-settings" class="section card">
@@ -97,34 +150,46 @@
             </div>
         </div>
 
-        <div class="card section" id="auth-card" data-section="settings">
-            <h3>🔐 Autenticação (teste rápido)</h3>
-            <p class="muted">Use para validar o fluxo de registro/login da API.</p>
-            <div class="row" style="margin-top: 16px;">
-                <div>
-                    <label>Email</label>
-                    <input id="email" type="email" placeholder="voce@exemplo.com" />
+        <div class="card section" id="section-account">
+            <div style="max-width:520px;margin:24px auto;padding:24px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 40px rgba(0,0,0,.35)">
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div style="font-size:1.4rem;font-weight:800;letter-spacing:.3px">Bem-vindo 👋</div>
+                    <div class="muted" style="margin-top:6px">Crie sua conta ou faça login para acessar tudo.</div>
                 </div>
-                <div>
-                    <label>Nome completo (opcional)</label>
-                    <input id="full_name" type="text" placeholder="Seu nome" />
+                <div class="row" style="margin-top: 8px;">
+                    <div style="flex:1">
+                        <label>Email</label>
+                        <input id="email" type="email" placeholder="voce@exemplo.com" />
+                    </div>
+                    <div style="flex:1">
+                        <label>Nome completo (opcional)</label>
+                        <input id="full_name" type="text" placeholder="Seu nome" />
+                    </div>
                 </div>
+                <div class="row" style="margin-top: 8px;">
+                    <div style="flex:1">
+                        <label>Senha</label>
+                        <div class="input-eye-group">
+                          <input id="password" type="password" placeholder="••••••••" />
+                          <button type="button" id="toggle-password" class="eye-btn" aria-label="Mostrar senha" title="Mostrar/ocultar senha">👁️</button>
+                        </div>
+                        <label class="remember-label"><input type="checkbox" id="remember-login"> Lembrar login</label>
+                    </div>
+                </div>
+                <div class="actions" style="margin-top:14px;justify-content:space-between">
+                    <div>
+                        <button class="btn" onclick="loginUser()">Entrar</button>
+                        <button class="btn" onclick="registerUser()">Registrar</button>
+                    </div>
+                    <div>
+                        <button class="btn" onclick="getProfile()">Meu Perfil</button>
+                        <button class="btn" onclick="logoutUser()">Logout</button>
+                        <button class="btn" onclick="setSection('home')">Menu</button>
+                    </div>
+                </div>
+                <p id="auth-msg" class="muted" style="margin-top: 12px;"></p>
+                <p id="token-msg" class="muted small mono" style="margin-top: 6px;"></p>
             </div>
-            <div class="row" style="margin-top: 16px;">
-                <div>
-                    <label>Senha</label>
-                    <input id="password" type="password" placeholder="••••••••" />
-                </div>
-                <div class="actions" style="align-items: end;">
-                    <button class="btn" onclick="registerUser()">Registrar</button>
-                    <button class="btn" onclick="loginUser()">Login</button>
-                    <button class="btn" onclick="getProfile()">Meu Perfil</button>
-                    <button class="btn" onclick="logoutUser()">Logout</button>
-                    <button class="btn" onclick="setSection('home')">Menu</button>
-                </div>
-            </div>
-            <p id="auth-msg" class="muted" style="margin-top: 12px;"></p>
-            <p id="token-msg" class="muted small mono" style="margin-top: 6px;"></p>
         </div>
 
         <div class="grid section" id="settings-grid" data-section="settings">
@@ -199,7 +264,7 @@
                 <p id="devices-msg" class="muted"></p>
             </div>
             
-            <div class="card requires-auth">
+            <div class="card requires-auth" id="playlist-card-root">
                 <h3>📺 Catálogo M3U</h3>
                 <p>Importe sua playlist, depois navegue em “Live TV”.</p>
                 <p class="muted">Informe URL ou cole o conteúdo; após importar, use o painel Live TV abaixo.</p>
@@ -218,20 +283,19 @@
                     <textarea id="m3u_content" rows="6" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text);" placeholder="#EXTM3U\n#EXTINF:-1 tvg-logo=\"...\" group-title=\"...\", Canal X\nhttp://...\n..."></textarea>
                 </div>
                 <div class="actions" style="margin-top: 12px;">
+                    <button class="btn" onclick="setSection('home')">Menu</button>
                     <button class="btn" onclick="ingestM3U()">Importar/Inserir M3U</button>
                     <button class="btn" onclick="listChannels()">Carregar no Live TV</button>
-                    <div class="card" id="playlists-card">
-                      <h3>📚 Playlists salvas</h3>
-                      <div class="actions" style="margin-bottom:8px">
-                        <button class="btn" onclick="listPlaylists()">Atualizar</button>
-                      </div>
-                      <p id="playlists-msg" class="muted">Carregue para ver suas playlists.</p>
-                      <ul id="playlists-list" class="list" style="max-height:260px;overflow:auto"></ul>
-                    </div>
+                </div>
+                <div class="card" id="playlists-card">
+                   <h3>📚 Playlists salvas</h3>
+                   <div class="actions" style="margin-bottom:8px">
+                     <button class="btn" onclick="listPlaylists()">Atualizar</button>
+                   </div>
+                   <p id="playlists-msg" class="muted">Carregue para ver suas playlists.</p>
+                   <ul id="playlists-list" class="list" style="max-height:260px;overflow:auto"></ul>
                 </div>
                 <p id="channels-msg" class="muted"></p>
-                <ul id="playlists-list" class="list"></ul>
-                <p id="playlists-msg" class="muted"></p>
             </div>
         </div>
 
@@ -247,9 +311,17 @@
                     <ul id="live-categories" class="list" style="max-height:160px;overflow:auto"></ul>
                     <div style="font-weight:700;margin:10px 0 6px;">Canais</div>
                     <input id="live-search" type="text" placeholder="Buscar canais..." />
-                    <ul id="live-channels" class="list" style="max-height:380px;overflow:auto"></ul>
+                    <div id="live-channels" class="cards-grid"></div>
                 </div>
                 <div class="live-stage">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span class="muted" style="font-size:12px;">Qualidade:</span>
+                        <select id="live-quality" class="btn" style="padding:6px 10px;background:#222;border:1px solid var(--border)"></select>
+                        <label class="btn" style="padding:6px 10px;cursor:pointer;">
+                            <input id="live-subtitle" type="file" accept=".vtt,.srt" style="display:none" />
+                            Legenda
+                        </label>
+                    </div>
                     <video id="video-player" controls autoplay playsinline style="width:100%;height:360px;background:#000;border-radius:8px;"></video>
                     <div id="player-title" style="margin-top:8px;font-weight:600;"></div>
                     <p id="player-msg" class="muted"></p>
@@ -269,9 +341,17 @@
                     <ul id="movies-categories" class="list" style="max-height:160px;overflow:auto"></ul>
                     <div style="font-weight:700;margin:10px 0 6px;">Filmes</div>
                     <input id="movies-search" type="text" placeholder="Buscar filmes..." />
-                    <ul id="movies-items" class="list" style="max-height:380px;overflow:auto"></ul>
+                    <div id="movies-items" class="cards-grid"></div>
                 </div>
                 <div class="live-stage">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span class="muted" style="font-size:12px;">Qualidade:</span>
+                        <select id="movies-quality" class="btn" style="padding:6px 10px;background:#222;border:1px solid var(--border)"></select>
+                        <label class="btn" style="padding:6px 10px;cursor:pointer;">
+                            <input id="movies-subtitle" type="file" accept=".vtt,.srt" style="display:none" />
+                            Legenda
+                        </label>
+                    </div>
                     <video id="video-movies" controls autoplay playsinline style="width:100%;height:360px;background:#000;border-radius:8px;"></video>
                     <div id="movies-title" style="margin-top:8px;font-weight:600;"></div>
                     <p id="movies-msg" class="muted"></p>
@@ -291,14 +371,30 @@
                     <ul id="series-categories" class="list" style="max-height:160px;overflow:auto"></ul>
                     <div style="font-weight:700;margin:10px 0 6px;">Episódios</div>
                     <input id="series-search" type="text" placeholder="Buscar séries..." />
-                    <ul id="series-items" class="list" style="max-height:380px;overflow:auto"></ul>
+                    <div id="series-items" class="cards-grid"></div>
                 </div>
                 <div class="live-stage">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span class="muted" style="font-size:12px;">Qualidade:</span>
+                        <select id="series-quality" class="btn" style="padding:6px 10px;background:#222;border:1px solid var(--border)"></select>
+                        <label class="btn" style="padding:6px 10px;cursor:pointer;">
+                            <input id="series-subtitle" type="file" accept=".vtt,.srt" style="display:none" />
+                            Legenda
+                        </label>
+                    </div>
                     <video id="video-series" controls autoplay playsinline style="width:100%;height:360px;background:#000;border-radius:8px;"></video>
                     <div id="series-title" style="margin-top:8px;font-weight:600;"></div>
                     <p id="series-msg" class="muted"></p>
                 </div>
             </div>
+        </div>
+
+        <div class="card section" id="section-archive">
+            <h3>🗂️ Arquivo</h3>
+            <div class="actions" style="margin-bottom:8px">
+                <button class="btn" onclick="setSection('home')">Menu</button>
+            </div>
+            <p class="muted">Área de arquivos e histórico. Em breve.</p>
         </div>
 
         <div class="card requires-auth section" id="section-payments" data-section="settings">
@@ -307,11 +403,12 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
         // Catálogo e reprodução por categoria
-        const API_URL = 'http://localhost:8000';
-        let _hls = null;
+        const API_URL = window.location.origin;
+        let _hls = null; let _hlsMap = {}; let _plyrMap = {};
         
         function getToken(){ return localStorage.getItem('access_token'); }
         function getRefreshToken(){ return localStorage.getItem('refresh_token'); }
@@ -330,8 +427,30 @@
           }catch(_){ return null; }
         }
         
+        async function getDeviceId(){
+          let id = localStorage.getItem('device_id');
+          if(id) return id;
+          const fp = [
+            navigator.userAgent,
+            `${screen.width}x${screen.height}x${screen.colorDepth}`,
+            navigator.language,
+            (Intl.DateTimeFormat().resolvedOptions().timeZone || ''),
+            (navigator.hardwareConcurrency || ''),
+            (navigator.platform || ''),
+          ].join('|');
+          try{
+            const data = new TextEncoder().encode(fp);
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            id = Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('');
+          }catch(_){ let h=0; for(let i=0;i<fp.length;i++){ h=((h<<5)-h)+fp.charCodeAt(i); h|=0; } id = Math.abs(h).toString(16); }
+          localStorage.setItem('device_id', id);
+          return id;
+        }
+        
         async function apiFetch(url, options={}, requireAuth=false){
           let opts = { ...options, headers: { ...(options.headers||{}) } };
+          const deviceId = await getDeviceId();
+          opts.headers['X-Device-ID'] = deviceId;
           if(requireAuth){
             const token = getToken();
             if(!token) throw new Error('Faça login para continuar');
@@ -378,30 +497,90 @@
           cand.push(orig);
           return [...new Set(cand)];
         }
+        // Player helpers (Plyr + HLS)
+        function ensurePlayer(section){
+          const map = { live:{video:'video-player'}, movies:{video:'video-movies'}, series:{video:'video-series'} };
+          const videoId = map[section].video;
+          const video = document.getElementById(videoId);
+          if (!video) return null;
+          if (!_plyrMap[section]){
+            _plyrMap[section] = new Plyr(video, {
+              controls: ['play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'],
+              autoplay: true,
+              ratio: '16:9'
+            });
+          }
+          return { video, plyr: _plyrMap[section] };
+        }
+        function updateQualityOptions(section, levels){
+          const select = document.getElementById(section+'-quality');
+          if (!select) return;
+          select.innerHTML = '';
+          const auto = document.createElement('option'); auto.value = 'auto'; auto.textContent = 'Auto'; select.appendChild(auto);
+          levels.forEach((l, i)=>{ const o=document.createElement('option'); o.value = i; o.textContent = (l.height? l.height+'p' : (l.bitrate? Math.round(l.bitrate/1000)+'kbps':'Qualidade '+i)); select.appendChild(o); });
+          select.onchange = () => {
+            const hls = _hlsMap[section]; if (!hls) return;
+            const v = select.value; hls.currentLevel = v === 'auto' ? -1 : parseInt(v, 10);
+          };
+        }
+        function loadSubtitle(section, file){
+          const map = { live:{video:'video-player'}, movies:{video:'video-movies'}, series:{video:'video-series'} };
+          const video = document.getElementById(map[section].video);
+          if (!video || !file) return;
+          const track = document.createElement('track');
+          track.kind = 'subtitles'; track.label = 'Legendas'; track.srclang = 'pt';
+          track.src = URL.createObjectURL(file);
+          // Remove anteriores
+          [...video.querySelectorAll('track')].forEach(t=>t.remove());
+          video.appendChild(track);
+        }
+        function proxify(url){ const did = localStorage.getItem('device_id') || ''; const token = localStorage.getItem('access_token') || ''; const qp = new URLSearchParams(); qp.append('url', url); if (did) qp.append('device_id', did); if (token) qp.append('token', token); return `${API_URL}/stream/m3u8?${qp.toString()}`; }
         function playChannelFor(section, ch) {
           const map = { live:{video:'video-player', title:'player-title', msg:'player-msg'}, movies:{video:'video-movies', title:'movies-title', msg:'movies-msg'}, series:{video:'video-series', title:'series-title', msg:'series-msg'} };
-          const video = document.getElementById(map[section].video);
           const title = document.getElementById(map[section].title);
           const msg = document.getElementById(map[section].msg);
-          if (!video) return;
+          const player = ensurePlayer(section);
+          if (!player) return;
+          const video = player.video;
           title.textContent = ch.name;
           const urls = candidateUrls(ch);
           let idx = 0;
           function tryNext(){
             if (idx >= urls.length) { msg.textContent = 'Falha ao reproduzir.'; return; }
-            const src = urls[idx++];
+            const srcCandidate = urls[idx++];
+            const src = proxify(srcCandidate);
             msg.textContent = `Carregando stream... (${idx}/${urls.length})`;
             try {
               if (window.Hls && window.Hls.isSupported()) {
-                if (_hls) { _hls.destroy(); _hls = null; }
-                _hls = new Hls({ maxBufferLength: 30 });
-                _hls.loadSource(src);
-                _hls.attachMedia(video);
-                _hls.on(Hls.Events.ERROR, function(_, data){
-                  if (data && (data.type === 'networkError' || data.details === 'manifestLoadError')) { tryNext(); return; }
+                const prev = _hlsMap[section];
+                if (prev) { prev.destroy(); _hlsMap[section] = null; }
+                const token = getToken();
+                const deviceId = localStorage.getItem('device_id') || '';
+                const hls = new Hls({
+                  maxBufferLength: 30,
+                  xhrSetup: function(xhr, url){
+                    if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                    if (deviceId) xhr.setRequestHeader('X-Device-ID', deviceId);
+                  },
+                  fetchSetup: function(context, init){
+                    init = init || {};
+                    init.headers = { ...(init.headers || {}) };
+                    if (token) init.headers['Authorization'] = 'Bearer ' + token;
+                    if (deviceId) init.headers['X-Device-ID'] = deviceId;
+                    return new Request(context.url, init);
+                  }
+                });
+                _hlsMap[section] = hls;
+                hls.loadSource(src);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, function(){
+                  updateQualityOptions(section, hls.levels || []);
+                  video.play().catch(()=>{});
+                });
+                hls.on(Hls.Events.ERROR, function(_, data){
+                  if (data && (data.type === 'networkError' || data.details === 'manifestLoadError' || data.details === 'xhrError')) { tryNext(); return; }
                   msg.textContent = `Erro no player: ${data.details || data.type}`;
                 });
-                video.play().catch(()=>{});
               } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = src; video.play().catch(()=>{});
               } else {
@@ -473,11 +652,13 @@
             function renderItems(list) {
               itemsEl.innerHTML = '';
               list.forEach(c => {
-                const li = document.createElement('li');
-                li.className = 'live-channel';
-                li.innerHTML = `<span style="display:inline-block;width:18px;height:18px;border-radius:2px;background:#e11d48;margin-right:8px;vertical-align:middle"></span><span>${c.name}</span>`;
-                li.onclick = () => playChannelFor(section, c);
-                itemsEl.appendChild(li);
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                const logo = c.logo_url ? `<img class="thumb" src="${c.logo_url}" alt="" onerror="this.style.display='none'">` : `<div class="thumb"></div>`;
+                const cat = (c.category||'');
+                card.innerHTML = `${logo}<div><div class="title">${c.name}</div><div class="meta">${cat}</div></div>`;
+                card.onclick = () => playChannelFor(section, c);
+                itemsEl.appendChild(card);
               });
               msgEl.textContent = `Total: ${list.length}`;
             }
@@ -489,6 +670,18 @@
           }
         }
         function listChannels(){ loadSectionCatalog('live'); }
+        // Subtitles input listeners
+        (function(){
+          const inputs = [
+            { id: 'live-subtitle', section: 'live' },
+            { id: 'movies-subtitle', section: 'movies' },
+            { id: 'series-subtitle', section: 'series' },
+          ];
+          inputs.forEach(i=>{
+            const el = document.getElementById(i.id);
+            if (el) el.onchange = (ev) => { const f = ev.target.files && ev.target.files[0]; if (f) loadSubtitle(i.section, f); };
+          });
+        })();
         
         // Ingestão M3U
         async function ingestM3U() {
@@ -597,7 +790,16 @@
             setStatus(false);
           }
         }
-        function updateAuthUI(){ /* opcional para destacar UI quando logado */ }
+        function updateAuthUI(){
+          const token = getToken();
+          // Mostrar/ocultar tiles que requerem login
+          const authedTiles = document.querySelectorAll('#section-home .requires-auth');
+          authedTiles.forEach(el => { el.style.display = token ? '' : 'none'; });
+          // Se estiver deslogado, abrir explicitamente a seção de conta
+          if(!token){
+            setSection('account');
+          }
+        }
         function logoutUser(){ localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); updateAuthUI(); document.getElementById('auth-msg').textContent = 'Logout realizado'; document.getElementById('token-msg').textContent=''; }
         async function registerUser(){
           const email = document.getElementById('email').value.trim();
@@ -607,7 +809,7 @@
           try {
             const res = await fetch(`${API_URL}/auth/register`, { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, full_name, password }) });
             const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao registrar'); msg.textContent = `Registrado: ${data.email}`;
-          } catch(e){ msg.textContent = `Erro: ${e.message}`; }
+          } catch(e){ msg.textContent = 'Erro: ' + (e && e.message ? e.message : (e && e.detail) || (typeof e === 'string' ? e : JSON.stringify(e))); }
         }
         async function loginUser(){
           const email = document.getElementById('email').value.trim();
@@ -616,32 +818,259 @@
           try {
             const res = await fetch(`${API_URL}/auth/login`, { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
             const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
-            localStorage.setItem('access_token', data.access_token); localStorage.setItem('refresh_token', data.refresh_token); msg.textContent='Login realizado'; tokenMsg.textContent = `access_token: ${data.access_token.slice(0,24)}...`; updateAuthUI();
-          } catch(e){ msg.textContent = `Erro: ${e.message}`; }
+            localStorage.setItem('access_token', data.access_token); localStorage.setItem('refresh_token', data.refresh_token);
+            msg.textContent='Login realizado'; tokenMsg.textContent = `access_token: ${data.access_token.slice(0,24)}...`;
+            updateAuthUI();
+            // Persistência opcional do login
+            const remember = document.getElementById('remember-login')?.checked;
+            if(remember){
+              localStorage.setItem('saved_email', email);
+              localStorage.setItem('saved_password', password);
+              localStorage.setItem('remember_login', '1');
+            } else {
+              localStorage.removeItem('saved_email');
+              localStorage.removeItem('saved_password');
+              localStorage.removeItem('remember_login');
+            }
+            // Garantir dispositivo vinculado e ativo
+            ensureDeviceBound();
+            // Ir direto para o menu inicial após login
+            setSection('home');
+          } catch(e){ msg.textContent = 'Erro: ' + (e && e.message ? e.message : (e && e.detail) || (typeof e === 'string' ? e : JSON.stringify(e))); }
         }
         async function getProfile(){
           const token = localStorage.getItem('access_token'); const msg = document.getElementById('auth-msg'); const tokenMsg = document.getElementById('token-msg'); if(!token){ msg.textContent='Faça login primeiro'; return; }
           try { const res = await apiFetch(`${API_URL}/auth/me`, { headers:{ 'Authorization': `Bearer ${token}` } }); const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Token inválido'); msg.textContent = `Usuário: ${data.email}`; tokenMsg.textContent = `admin=${data.is_admin} ativo=${data.is_active}`; }
-          catch(e){ msg.textContent = `Erro: ${e.message}`; }
+          catch(e){ msg.textContent = 'Erro: ' + (e && e.message ? e.message : (e && e.detail) || (typeof e === 'string' ? e : JSON.stringify(e))); }
         }
         
+        // Licenças e dispositivos
+        async function issueLicense(){
+          const plan = (document.getElementById('plan_name')?.value || 'basic');
+          const max = parseInt(document.getElementById('max_devices')?.value || '1', 10);
+          const msg = document.getElementById('licenses-msg');
+          if(msg) msg.textContent = 'Emitindo licença...';
+          try {
+            const res = await apiFetch(`${API_URL}/licenses/issue`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ plan_name: plan, max_devices: max }) }, true);
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.detail || 'Erro ao emitir licença');
+            if(msg) msg.textContent = `Licença emitida: ${data.license_key} (id=${data.id})`;
+            listMyLicenses();
+          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+        }
+        async function listMyLicenses(){
+          const ul = document.getElementById('licenses-list');
+          const msg = document.getElementById('licenses-msg');
+          if(msg) msg.textContent = 'Carregando licenças...';
+          if(ul) ul.innerHTML = '';
+          try {
+            const res = await apiFetch(`${API_URL}/licenses/me`, {}, true);
+            const items = await res.json();
+            if(!res.ok) throw new Error(items.detail || 'Erro ao listar licenças');
+            if(!items || items.length === 0){ if(msg) msg.textContent = 'Nenhuma licença.'; return; }
+            if(msg) msg.textContent = `Total: ${items.length}`;
+            items.forEach(l => {
+              const li = document.createElement('li');
+              li.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div style="flex:1;">
+                  <div style="font-weight:600;">${l.plan_name} • ${l.license_key}</div>
+                  <div class="muted" style="font-size:12px;">id=${l.id} • dispositivos: ${l.max_devices} • ${(l.is_active?'Ativa':'Inativa')}</div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn" style="padding:6px 10px" onclick="document.getElementById('toggle_license_id').value=${l.id}; activateLicense()">Ativar</button>
+                  <button class="btn" style="padding:6px 10px;background:#991b1b" onclick="document.getElementById('toggle_license_id').value=${l.id}; deactivateLicense()">Desativar</button>
+                </div>
+              </div>`;
+              ul?.appendChild(li);
+            });
+          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+        }
+        async function deactivateLicense(){
+          const id = parseInt(document.getElementById('toggle_license_id')?.value || '0', 10);
+          const msg = document.getElementById('licenses-msg'); if(!id){ if(msg) msg.textContent = 'Informe o ID da licença'; return; }
+          if(msg) msg.textContent = 'Desativando...';
+          try {
+            const res = await apiFetch(`${API_URL}/licenses/${id}/deactivate`, { method:'POST' }, true);
+            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao desativar');
+            if(msg) msg.textContent = `Licença ${data.id} desativada`;
+            listMyLicenses();
+          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+        }
+        async function activateLicense(){
+          const id = parseInt(document.getElementById('toggle_license_id')?.value || '0', 10);
+          const msg = document.getElementById('licenses-msg'); if(!id){ if(msg) msg.textContent = 'Informe o ID da licença'; return; }
+          if(msg) msg.textContent = 'Ativando...';
+          try {
+            const res = await apiFetch(`${API_URL}/licenses/${id}/activate`, { method:'POST' }, true);
+            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao ativar');
+            if(msg) msg.textContent = `Licença ${data.id} ativada`;
+            listMyLicenses();
+          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+        }
+        async function bindDevice(){
+          const license_id = parseInt(document.getElementById('bind_license_id')?.value || '0', 10);
+          const device_id = (document.getElementById('bind_device_id')?.value || '').trim();
+          const device_name = (document.getElementById('bind_device_name')?.value || '').trim();
+          const msg = document.getElementById('devices-msg');
+          if(!license_id || !device_id){ if(msg) msg.textContent = 'Informe licença e dispositivo'; return; }
+          if(msg) msg.textContent = 'Vinculando...';
+          try {
+            const res = await apiFetch(`${API_URL}/devices/bind`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ license_id, device_id, device_name: device_name || null }) }, true);
+            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao vincular');
+            if(msg) msg.textContent = `Dispositivo vinculado: id=${data.id}`;
+          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+        }
+        async function listMyDevices(){
+          const msg = document.getElementById('devices-msg');
+          if(msg) msg.textContent = 'Carregando dispositivos...';
+          try {
+            const res = await apiFetch(`${API_URL}/devices/me`, {}, true);
+            const items = await res.json();
+            if(!res.ok) throw new Error(items.detail || 'Erro ao listar dispositivos');
+            const ul = document.getElementById('devices-list');
+            if(ul){ ul.innerHTML = ''; (items||[]).forEach(d=>{ const li=document.createElement('li'); li.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px"><div><div style="font-weight:600">${d.device_name||'Sem nome'}</div><div class="muted" style="font-size:12px">id=${d.id} • device_id=${d.device_id} • ${(d.is_active?'Ativo':'Inativo')}</div></div></div>`; ul.appendChild(li); }); }
+            if(msg) msg.textContent = `Total: ${(items||[]).length}`;
+          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+        }
+        async function unbindDevice(){
+          const msg = document.getElementById('devices-msg');
+          if(msg) msg.textContent = 'Desvincular dispositivo: endpoint não disponível ainda.';
+        }
+        async function heartbeatDevice(){
+          const msg = document.getElementById('devices-msg');
+          const device_id = await getDeviceId();
+          if(msg) msg.textContent = 'Enviando heartbeat...';
+          try {
+            const res = await apiFetch(`${API_URL}/devices/heartbeat`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ device_id }) }, true);
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.detail || 'Erro no heartbeat');
+            if(msg) msg.textContent = `Heartbeat OK: id=${data.id}`;
+          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+        }
+        async function ensureDeviceBound(){
+          try{
+            const token = getToken(); if(!token) return;
+            const device_id = await getDeviceId();
+            // Licenças
+            const resLic = await apiFetch(`${API_URL}/licenses/me`, {}, true);
+            const licenses = await resLic.json(); if(!resLic.ok || !licenses || licenses.length===0) return;
+            const active = licenses.find(l=>l.is_active) || licenses[0];
+            // Dispositivos atuais
+            let exists = false; try{ const resDev = await apiFetch(`${API_URL}/devices/me`, {}, true); if(resDev.ok){ const devs = await resDev.json(); exists = (devs||[]).some(d=> d.device_id === device_id && d.is_active); } }catch(_){ }
+            if(!exists){ await apiFetch(`${API_URL}/devices/bind`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ license_id: active.id, device_id, device_name: (navigator.platform||'WebPlayer') }) }, true); }
+            await apiFetch(`${API_URL}/devices/heartbeat`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ device_id }) }, true);
+          }catch(e){ try{ debugError('ensureDeviceBound: ' + (e?.message || JSON.stringify(e))); }catch(_){ /* noop */ } }
+        }
+
         // Navegação: carregar catálogos ao abrir cada seção
         function setSection(sec){
+          const token = getToken();
+          // Gate: sem login só permite "account"
+          if(!token && sec !== 'account'){
+            document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
+            const acc = document.getElementById('section-account'); if(acc) acc.classList.add('active');
+            return;
+          }
           document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
           if(sec==='home'){ document.getElementById('section-home').classList.add('active'); }
+          if(sec==='account'){ document.getElementById('section-account').classList.add('active'); }
           if(sec==='settings'){
             document.getElementById('section-settings').classList.add('active');
-            document.getElementById('auth-card').classList.add('active');
             document.getElementById('settings-grid').classList.add('active');
             document.getElementById('section-payments').classList.add('active');
+            // Mostrar todos os cards da grid
+            const grid = document.getElementById('settings-grid');
+            if(grid){ Array.from(grid.querySelectorAll('.card')).forEach(c=> c.style.display = ''); }
           }
+          if(sec==='playlist'){
+            // Reutiliza a grid de configurações mostrando apenas o card de playlist
+            const grid = document.getElementById('settings-grid');
+            if(grid){
+              grid.classList.add('active');
+              Array.from(grid.querySelectorAll('.card')).forEach(c=> c.style.display = (c.id === 'playlist-card-root') ? '' : 'none');
+            }
+          }
+          if(sec==='archive'){ document.getElementById('section-archive').classList.add('active'); }
           if(sec==='live'){ document.getElementById('live-tv').classList.add('active'); loadSectionCatalog('live'); }
           if(sec==='movies'){ document.getElementById('section-movies').classList.add('active'); loadSectionCatalog('movies'); }
           if(sec==='series'){ document.getElementById('section-series').classList.add('active'); loadSectionCatalog('series'); }
         }
         
         // Boot
-        checkAPI(); updateAuthUI();
+        checkAPI(); updateAuthUI(); getDeviceId();
+
+        // Debug init
+        (function(){
+          const logEl = () => document.getElementById('debug-log');
+          window._debug = { logs: [] };
+          function renderLogs(){ const el = logEl(); if(!el) return; el.textContent = _debug.logs.join('\n'); el.parentElement.scrollTop = el.parentElement.scrollHeight; }
+          window.debugLog = function(msg){ const line = `[${new Date().toLocaleTimeString()}] ${msg}`; _debug.logs.push(line); renderLogs(); };
+          window.debugError = function(msg){ debugLog('ERROR: ' + msg); };
+          const panel = document.getElementById('debug-panel');
+          const toggle = document.getElementById('debug-toggle');
+          const closeBtn = document.getElementById('debug-close');
+          function show(){ if(panel) panel.style.display='block'; }
+          function hide(){ if(panel) panel.style.display='none'; }
+          if(toggle) toggle.onclick = ()=>{ if(panel && panel.style.display==='block') hide(); else show(); };
+          if(closeBtn) closeBtn.onclick = hide;
+          // abrir por padrão para facilitar inspeção
+          show();
+
+          window.addEventListener('error', (e)=>{ debugError(`${e.message} (${e.filename}:${e.lineno})`); });
+          window.addEventListener('unhandledrejection', (e)=>{ const r = e.reason; debugError(`Promise: ${r && r.message ? r.message : r}`); });
+
+          const originalFetch = window.fetch;
+          window.fetch = async function(...args){
+            const url = typeof args[0] === 'string' ? args[0] : (args[0]?.url || '');
+            debugLog(`Fetch: ${url}`);
+            try {
+              const res = await originalFetch(...args);
+              if(!res.ok) debugError(`HTTP ${res.status} on ${url}`);
+              return res;
+            } catch(err){
+              debugError(`Network error on ${url}: ${err.message}`);
+              throw err;
+            }
+          };
+
+          debugLog('Debug iniciado. API_URL=' + (window.API_URL || 'indefinido'));
+        })();
+
+        // Inicialização: lembrar login e botão de olho
+        function loadRememberedLogin(){
+          try{
+            const remember = localStorage.getItem('remember_login') === '1';
+            const emailEl = document.getElementById('email');
+            const passEl = document.getElementById('password');
+            const rememberEl = document.getElementById('remember-login');
+            if(rememberEl) rememberEl.checked = remember;
+            if(remember){
+              const se = localStorage.getItem('saved_email');
+              const sp = localStorage.getItem('saved_password');
+              if(se && emailEl) emailEl.value = se;
+              if(sp && passEl) passEl.value = sp;
+            }
+          }catch(_){}
+        }
+        function initPasswordToggle(){
+          const btn = document.getElementById('toggle-password');
+          const input = document.getElementById('password');
+          if(btn && input){
+            btn.addEventListener('click', ()=>{
+              const hidden = input.type === 'password';
+              input.type = hidden ? 'text' : 'password';
+              btn.textContent = hidden ? '🙈' : '👁️';
+              btn.setAttribute('aria-label', hidden ? 'Ocultar senha' : 'Mostrar senha');
+            });
+          }
+        }
+        document.addEventListener('DOMContentLoaded', ()=>{ loadRememberedLogin(); initPasswordToggle(); });
         </script>
+  <!-- Debug UI -->
+  <button id="debug-toggle" class="debug-toggle">Debug</button>
+  <div id="debug-panel" class="debug-panel">
+    <div class="debug-header">Debug <button id="debug-close" class="btn small">Fechar</button></div>
+    <div class="debug-body"><pre id="debug-log"></pre></div>
+  </div>
 </body>
 </html>
