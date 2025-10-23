@@ -451,7 +451,14 @@ def list_playlists(current_user: User = Depends(require_active_license), db: Ses
 # Atualizar playlist (nome/url/ativo)
 @app.patch('/catalog/playlists/{playlist_id}', response_model=M3UPlaylistResponse)
 def update_playlist(playlist_id: int, payload: M3UPlaylistUpdate, current_user: User = Depends(require_active_license), db: Session = Depends(get_db), request: Request = None):
-    pl = db.query(M3UPlaylist).filter(M3UPlaylist.id == playlist_id).first()
+    pl = (
+        db.query(M3UPlaylist)
+        .filter(
+            M3UPlaylist.id == playlist_id,
+            M3UPlaylist.user_id == current_user.id,
+        )
+        .first()
+    )
     if not pl:
         raise HTTPException(status_code=404, detail='Playlist not found')
     if payload.name is not None:
@@ -469,7 +476,14 @@ def update_playlist(playlist_id: int, payload: M3UPlaylistUpdate, current_user: 
 # Deletar playlist
 @app.delete('/catalog/playlists/{playlist_id}')
 def delete_playlist(playlist_id: int, current_user: User = Depends(require_active_license), db: Session = Depends(get_db), request: Request = None):
-    pl = db.query(M3UPlaylist).filter(M3UPlaylist.id == playlist_id).first()
+    pl = (
+        db.query(M3UPlaylist)
+        .filter(
+            M3UPlaylist.id == playlist_id,
+            M3UPlaylist.user_id == current_user.id,
+        )
+        .first()
+    )
     if not pl:
         raise HTTPException(status_code=404, detail='Playlist not found')
     db.delete(pl)
