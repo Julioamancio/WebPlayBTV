@@ -16,8 +16,10 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relacionamentos
-    licenses = relationship("License", back_populates="user")
-    devices = relationship("Device", back_populates="user")
+    licenses = relationship("License", back_populates="user", cascade="all, delete-orphan")
+    devices = relationship("Device", back_populates="user", cascade="all, delete-orphan")
+    playlists = relationship("M3UPlaylist", back_populates="user", cascade="all, delete-orphan")
+    channels = relationship("Channel", back_populates="user", cascade="all, delete-orphan")
 
 class License(Base):
     __tablename__ = "licenses"
@@ -69,6 +71,12 @@ class Channel(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    playlist_id = Column(Integer, ForeignKey("m3u_playlists.id"), nullable=True, index=True)
+
+    # Relacionamentos
+    user = relationship("User", back_populates="channels")
+    playlist = relationship("M3UPlaylist", back_populates="channels")
 
 class M3UPlaylist(Base):
     __tablename__ = "m3u_playlists"
@@ -81,6 +89,11 @@ class M3UPlaylist(Base):
     last_updated = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+
+    # Relacionamentos
+    user = relationship("User", back_populates="playlists")
+    channels = relationship("Channel", back_populates="playlist", cascade="all, delete-orphan")
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

@@ -2,12 +2,13 @@ from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, RedirectResponse
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from .database import SessionLocal, engine, get_db
 from .models import Base, User, License, Device, AuditLog, Channel, M3UPlaylist
 from .schemas import (
     UserCreate, UserResponse, LoginRequest, Token, TokenRefresh,
     LicenseCreate, LicenseResponse, DeviceCreate, DeviceResponse,
+    DeviceUnbind, DeviceHeartbeat,
     ChannelResponse, M3UPlaylistResponse, M3UPlaylistUpdate
 )
 from .auth import (
@@ -23,6 +24,8 @@ import gzip
 import zlib
 import http.cookiejar
 import logging
+import time
+from datetime import datetime
 from starlette.staticfiles import StaticFiles
 
 # Criar tabelas
@@ -32,7 +35,27 @@ app = FastAPI(title="WEBplayer JTV API")
 
 # Simple cookie jars per origin to carry Set-Cookie between playlist and segments
 COOKIE_JARS = {}
+COOKIE_JAR_MAX = 32
+COOKIE_JAR_TTL_SECONDS = 3600
 logger = logging.getLogger("webplayer")
+
+
+def get_cookie_jar_for_origin(key: str) -> http.cookiejar.CookieJar:
+    """Return a cookie jar for the given origin, pruning stale entries."""
+    now = time.time()
+    stale_keys = [k for k, (_, ts) in COOKIE_JARS.items() if now - ts > COOKIE_JAR_TTL_SECONDS]
+    for stale in stale_keys:
+        COOKIE_JARS.pop(stale, None)
+    if key in COOKIE_JARS:
+        jar, _ = COOKIE_JARS[key]
+        COOKIE_JARS[key] = (jar, now)
+        return jar
+    if len(COOKIE_JARS) >= COOKIE_JAR_MAX:
+        oldest_key = min(COOKIE_JARS.items(), key=lambda kv: kv[1][1])[0]
+        COOKIE_JARS.pop(oldest_key, None)
+    jar = http.cookiejar.CookieJar()
+    COOKIE_JARS[key] = (jar, now)
+    return jar
 
 # Dev CORS (ajustar em produção)
 app.add_middleware(
@@ -339,50 +362,90 @@ def ingest_m3u(name: str, url: str | None = None, content: str | None = None, cu
         raise HTTPException(status_code=400, detail='Invalid M3U content')
     parsed = parse_m3u(data)
     # Criar/atualizar playlist (guardar conteúdo quando inserido manualmente)
-    content_to_store = None
-    if not url and content:
-        content_to_store = data
-    playlist = M3UPlaylist(name=name, url=url, content=content_to_store, channels_count=len(parsed), last_updated=datetime.utcnow(), is_active=True)
-    db.add(playlist)
-    db.commit()
-    db.refresh(playlist)
-    # Inserir canais (simples: cria novos)
-    created = []
-    for ch in parsed:
-        existing = db.query(Channel).filter(Channel.url == ch['url']).first()
-        if existing:
-            existing.name = ch['name']
-            existing.logo_url = ch.get('logo_url')
-            existing.category = ch.get('category')
-            existing.country = ch.get('country')
-            existing.language = ch.get('language')
-            existing.is_active = True
-            db.commit()
-            db.refresh(existing)
-            created.append(existing)
-        else:
-            channel = Channel(
-                name=ch['name'], url=ch['url'], logo_url=ch.get('logo_url'),
-                category=ch.get('category'), country=ch.get('country'), language=ch.get('language'),
-                is_active=True
+    content_to_store = data if (not url and content) else None
+    created: List[Channel] = []
+    try:
+        playlist = M3UPlaylist(
+            name=name,
+            url=url,
+            content=content_to_store,
+            channels_count=len(parsed),
+            last_updated=datetime.utcnow(),
+            is_active=True,
+            user_id=current_user.id,
+        )
+        db.add(playlist)
+        db.flush()
+        # Inserir canais (simples: cria novos)
+        urls = {ch.get('url') for ch in parsed if ch.get('url')}
+        existing_by_url = {}
+        if urls:
+            existing_channels = (
+                db.query(Channel)
+                .filter(Channel.user_id == current_user.id, Channel.url.in_(urls))
+                .all()
             )
-            db.add(channel)
-            db.commit()
-            db.refresh(channel)
-            created.append(channel)
+            existing_by_url = {ch.url: ch for ch in existing_channels}
+        for ch in parsed:
+            ch_url = ch.get('url')
+            if not ch_url:
+                continue
+            existing = existing_by_url.get(ch_url)
+            if existing:
+                existing.name = ch['name']
+                existing.logo_url = ch.get('logo_url')
+                existing.category = ch.get('category')
+                existing.country = ch.get('country')
+                existing.language = ch.get('language')
+                existing.is_active = True
+                existing.playlist_id = playlist.id
+                existing.updated_at = datetime.utcnow()
+                created.append(existing)
+            else:
+                channel = Channel(
+                    name=ch['name'],
+                    url=ch_url,
+                    logo_url=ch.get('logo_url'),
+                    category=ch.get('category'),
+                    country=ch.get('country'),
+                    language=ch.get('language'),
+                    is_active=True,
+                    user_id=current_user.id,
+                    playlist_id=playlist.id,
+                )
+                db.add(channel)
+                created.append(channel)
+
+        playlist.channels_count = len(created)
+        db.flush()
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    db.refresh(playlist)
+    for channel in created:
+        db.refresh(channel)
     audit(db, current_user.id, action='m3u_ingest', resource='playlist', resource_id=playlist.id, request=request)
     return created
 
 # Listar canais
 @app.get('/catalog/channels', response_model=List[ChannelResponse])
-def list_channels(current_user: User = Depends(require_active_license), db: Session = Depends(get_db)):
-    items = db.query(Channel).filter(Channel.is_active == True).all()
+def list_channels(playlist_id: Optional[int] = None, current_user: User = Depends(require_active_license), db: Session = Depends(get_db)):
+    query = db.query(Channel).filter(Channel.user_id == current_user.id, Channel.is_active == True)
+    if playlist_id is not None:
+        query = query.filter(Channel.playlist_id == playlist_id)
+    items = query.order_by(Channel.created_at.asc()).all()
     return items
 
 # Listar playlists M3U
 @app.get('/catalog/playlists', response_model=List[M3UPlaylistResponse])
 def list_playlists(current_user: User = Depends(require_active_license), db: Session = Depends(get_db)):
-    items = db.query(M3UPlaylist).order_by(M3UPlaylist.created_at.desc()).all()
+    items = (
+        db.query(M3UPlaylist)
+        .filter(M3UPlaylist.user_id == current_user.id)
+        .order_by(M3UPlaylist.created_at.desc())
+        .all()
+    )
     return items
 
 # Atualizar playlist (nome/url/ativo)
@@ -512,10 +575,7 @@ def stream_proxy_m3u8(url: str, current_user: User = Depends(require_active_lice
             },
         )
         key = origin.netloc
-        jar = COOKIE_JARS.get(key)
-        if jar is None:
-            jar = http.cookiejar.CookieJar()
-            COOKIE_JARS[key] = jar
+        jar = get_cookie_jar_for_origin(key)
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
         with opener.open(req, timeout=30) as resp:
             raw = resp.read()
@@ -599,10 +659,7 @@ def stream_proxy_segment(url: str, current_user: User = Depends(require_active_l
             },
         )
         key = origin.netloc
-        jar = COOKIE_JARS.get(key)
-        if jar is None:
-            jar = http.cookiejar.CookieJar()
-            COOKIE_JARS[key] = jar
+        jar = get_cookie_jar_for_origin(key)
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
         with opener.open(req, timeout=30) as resp:
             raw = resp.read()

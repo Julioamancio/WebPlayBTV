@@ -83,6 +83,8 @@ class ChannelResponse(ChannelBase):
     id: int
     is_active: bool
     created_at: datetime
+    user_id: int
+    playlist_id: Optional[int] = None
     
     class Config:
         from_attributes = True
@@ -103,6 +105,8 @@ class M3UPlaylistResponse(BaseModel):
     last_updated: Optional[datetime]
     is_active: bool
     created_at: datetime
+    user_id: int
+
     class Config:
         from_attributes = True
 
