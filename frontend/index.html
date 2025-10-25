@@ -39,6 +39,22 @@
         .list { margin-top: 12px; list-style: none; }
         .list li { margin: 6px 0; color: #d6d6e6; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.03); }
         .list li:hover{background: rgba(255,255,255,.06)}
+        .badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:0.75rem;font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+        .badge-pending{background:rgba(250,204,21,.15);color:#facc15;border:1px solid rgba(250,204,21,.4)}
+        .badge-approved{background:rgba(34,197,94,.15);color:#34d399;border:1px solid rgba(34,197,94,.4)}
+        .badge-rejected{background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.35)}
+        .badge-active{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.4)}
+        .badge-inactive{background:rgba(148,163,184,.15);color:#cbd5f5;border:1px solid rgba(148,163,184,.3)}
+        .badge-default{background:rgba(255,255,255,.12);color:#e2e8f0;border:1px solid rgba(255,255,255,.2)}
+        .device-chip{display:inline-flex;align-items:center;padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:999px;font-size:0.75rem;margin:2px 4px 2px 0}
+        .device-chip:hover{background:rgba(255,255,255,.12)}
+        .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;align-items:center;justify-content:center;z-index:9999;}
+        .modal-backdrop.show{display:flex;}
+        .modal-card{background:#18181b;border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:28px;max-width:420px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,.45);}
+        .modal-card h3{margin-bottom:12px;font-size:1.2rem;font-weight:700;}
+        .modal-card p{color:#e2e8f0;font-size:0.95rem;margin-bottom:12px;}
+        .modal-actions{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+        .modal-hint{background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.2);padding:12px;border-radius:12px;font-size:0.85rem;color:#cbd5f5;}
         /* Cards grid for items */
         .cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
         .card-item{background:#141414;border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center;cursor:pointer;transition:transform .15s,box-shadow .15s}
@@ -87,19 +103,19 @@
      </style>
 </head>
 <body style="background:#0a0a0f">
-  <div id="boot-marker" style="padding:10px;background:#ffeb3b;color:#000;font-weight:600;text-align:center">Carregando app… Se ficar branco, pressione Ctrl+F5</div>
+  <div id="boot-marker" style="padding:10px;background:#ffeb3b;color:#000;font-weight:600;text-align:center">Carregando app... Se ficar branco, pressione Ctrl+F5</div>
     <div class="container">
         <div class="header">
             <div class="brand" style="justify-content:center">
               <span class="brand-icon" aria-hidden="true"><svg width="48" height="48" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e11d48"/><stop offset="1" stop-color="#b91c1c"/></linearGradient></defs><rect x="12" y="20" width="40" height="28" rx="6" fill="url(#g)" stroke="#7f1d1d" stroke-width="2"/><rect x="18" y="26" width="28" height="16" rx="3" fill="#0a0a0f"/><path d="M28 34l6 4-6 4v-8z" fill="#ffffff"/><circle cx="22" cy="16" r="3" fill="#e11d48"/><circle cx="42" cy="16" r="3" fill="#e11d48"/><path d="M22 16l-8 -6" stroke="#e11d48" stroke-width="2"/><path d="M42 16l8 -6" stroke="#e11d48" stroke-width="2"/></svg></span>
               <h1 class="brand-text">WEBplayer JTV</h1>
             </div>
-            <p>Assista ao que você gosta, do seu jeito.</p>
+            <p>Assista ao que voce gosta, do seu jeito.</p>
         </div>
 
         <div id="section-home" class="card section active">
             <div class="top-bar">
-               <div class="expiry small">A lista de reprodução atual expira: 2025-01-01</div>
+               <div class="expiry small">A lista de reproducao atual expira: 2025-01-01</div>
              </div>
             <div class="home-grid" style="margin-top:10px;">
                 <div class="tile tile-big requires-auth" onclick="setSection('live')">
@@ -112,11 +128,11 @@
                  </div>
                 <div class="tile requires-auth" onclick="setSection('series')">
                      <div class="icon"><i class="fa-solid fa-clapperboard"></i></div>
-                     <div class="label">Séries</div>
+                     <div class="label">Series</div>
                  </div>
                 <div class="tile requires-auth" onclick="setSection('settings')">
                      <div class="icon"><i class="fa-solid fa-gear"></i></div>
-                     <div class="label">Configurações</div>
+                     <div class="label">Configuracoes</div>
                  </div>
                 <div class="tile requires-auth" onclick="window._channels=null; setSection('live');">
                      <div class="icon"><i class="fa-solid fa-rotate-right"></i></div>
@@ -128,14 +144,14 @@
                  </div>
                 <div class="tile requires-auth" onclick="setSection('playlist')">
                      <div class="icon"><i class="fa-solid fa-list"></i></div>
-                     <div class="label">Mudar lista de reprodução</div>
+                     <div class="label">Mudar lista de reproducao</div>
                  </div>
                 <div class="tile requires-auth" onclick="setSection('archive')">
                      <div class="icon"><i class="fa-solid fa-folder-open"></i></div>
                      <div class="label">Arquivo</div>
                  </div>
             </div>
-            <div class="footer small">versão: 1.7.2.0</div>
+            <div class="footer small">versao: 1.7.2.0</div>
         </div>
 
         <div id="section-settings" class="section card">
@@ -144,7 +160,7 @@
                 <span>Status da API: <span id="api-text">Verificando...</span></span>
             </div>
             <div class="actions">
-                <button class="btn" onclick="checkAPI()">Testar Conexão</button>
+                <button class="btn" onclick="checkAPI()">Testar Conexao</button>
                 <span class="pill">Backend: <span class="mono">http://localhost:8000</span></span>
                 <button class="btn" onclick="setSection('home')">Voltar ao Menu</button>
             </div>
@@ -153,8 +169,8 @@
         <div class="card section" id="section-account">
             <div style="max-width:520px;margin:24px auto;padding:24px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 40px rgba(0,0,0,.35)">
                 <div style="text-align:center;margin-bottom:16px;">
-                    <div style="font-size:1.4rem;font-weight:800;letter-spacing:.3px">Bem-vindo 👋</div>
-                    <div class="muted" style="margin-top:6px">Crie sua conta ou faça login para acessar tudo.</div>
+                    <div style="font-size:1.4rem;font-weight:800;letter-spacing:.3px">Bem-vindo </div>
+                    <div class="muted" style="margin-top:6px">Crie sua conta ou faca login para acessar tudo.</div>
                 </div>
                 <div class="row" style="margin-top: 8px;">
                     <div style="flex:1">
@@ -170,8 +186,8 @@
                     <div style="flex:1">
                         <label>Senha</label>
                         <div class="input-eye-group">
-                          <input id="password" type="password" placeholder="••••••••" />
-                          <button type="button" id="toggle-password" class="eye-btn" aria-label="Mostrar senha" title="Mostrar/ocultar senha">👁️</button>
+                          <input id="password" type="password" placeholder="" />
+                          <button type="button" id="toggle-password" class="eye-btn" aria-label="Mostrar senha" title="Mostrar/ocultar senha"></button>
                         </div>
                         <label class="remember-label"><input type="checkbox" id="remember-login"> Lembrar login</label>
                     </div>
@@ -193,9 +209,9 @@
         </div>
 
         <div class="grid section" id="settings-grid" data-section="settings">
-            <div class="card requires-auth">
-                <h3>🎫 Licenças</h3>
-                <p class="muted">Emita uma licença para sua conta e liste as suas.</p>
+            <div class="card requires-auth" id="license-request-card">
+                <h3> Licencas</h3>
+                <p class="muted">Solicite uma licenca. O administrador aprova e libera o dispositivo por 30 dias.</p>
                 <div class="row" style="margin-top: 16px;">
                     <div>
                         <label>Plano</label>
@@ -205,35 +221,36 @@
                         </select>
                     </div>
                     <div>
-                        <label>Máx. dispositivos</label>
-                        <input id="max_devices" type="number" min="1" max="10" value="1" />
+                        <label>Nome do dispositivo</label>
+                        <input id="device_friendly_name" type="text" placeholder="ex.: Fire Stick Sala" />
                     </div>
                 </div>
                 <div class="actions" style="margin-top: 12px;">
-                    <button class="btn" onclick="issueLicense()">Emitir Licença</button>
-                    <button class="btn" onclick="listMyLicenses()">Listar Minhas Licenças</button>
+                    <button class="btn" onclick="submitLicenseRequest()">Solicitar Licenca</button>
+                    <button class="btn" onclick="refreshLicenseData()">Atualizar Status</button>
                 </div>
-                <div class="row" style="margin-top: 16px;">
-                    <div>
-                        <label>ID da Licença</label>
-                        <input id="toggle_license_id" type="number" placeholder="ID da licença" />
-                    </div>
-                    <div class="actions" style="align-items: end;">
-                        <button class="btn" onclick="deactivateLicense()">Desativar</button>
-                        <button class="btn" onclick="activateLicense()">Ativar</button>
-                    </div>
-                </div>
+                <h4 style="margin-top:18px;">Solicitacoes</h4>
+                <ul id="license-requests-list" class="list"></ul>
+                <p id="license-requests-msg" class="muted"></p>
+                <h4 style="margin-top:18px;">Licencas</h4>
                 <ul id="licenses-list" class="list"></ul>
                 <p id="licenses-msg" class="muted"></p>
             </div>
-            
+            <div class="card requires-auth admin-only" id="admin-requests-card" style="display:none;">
+                <h3> Aprovacao de Licencas <span id="admin-new-requests-badge" class="badge badge-pending" style="display:none;margin-left:8px;"></span></h3>
+                <p class="muted">Gerencie solicitacoes pendentes dos clientes.</p>
+                <button class="btn" onclick="loadAdminRequests()" style="margin-bottom:12px;">Atualizar Solicitacoes</button>
+                <ul id="admin-requests-list" class="list"></ul>
+                <p id="admin-requests-msg" class="muted"></p>
+            </div>
+
             <div class="card requires-auth">
-                <h3>📱 Dispositivos</h3>
-                <p class="muted">Vincule um dispositivo a uma licença.</p>
+                <h3> Dispositivos</h3>
+                <p class="muted">Vincule um dispositivo a uma licenca.</p>
                 <div class="row" style="margin-top: 16px;">
                     <div>
-                        <label>ID da Licença</label>
-                        <input id="bind_license_id" type="number" placeholder="ID da licença" />
+                        <label>ID da Licenca</label>
+                        <input id="bind_license_id" type="number" placeholder="ID da licenca" />
                     </div>
                     <div>
                         <label>ID do Dispositivo</label>
@@ -243,7 +260,7 @@
                 <div class="row" style="margin-top: 16px;">
                     <div>
                         <label>Nome do Dispositivo (opcional)</label>
-                        <input id="bind_device_name" type="text" placeholder="ex.: iPhone do João" />
+                        <input id="bind_device_name" type="text" placeholder="ex.: iPhone do Joao" />
                     </div>
                     <div class="actions" style="align-items: end;">
                         <button class="btn" onclick="bindDevice()">Vincular</button>
@@ -265,9 +282,9 @@
             </div>
             
             <div class="card requires-auth" id="playlist-card-root">
-                <h3>📺 Catálogo M3U</h3>
-                <p>Importe sua playlist, depois navegue em “Live TV”.</p>
-                <p class="muted">Informe URL ou cole o conteúdo; após importar, use o painel Live TV abaixo.</p>
+                <h3> Catalogo M3U</h3>
+                <p>Importe sua playlist, depois navegue em Live TV.</p>
+                <p class="muted">Informe URL ou cole o conteudo; apos importar, use o painel Live TV abaixo.</p>
                 <div class="row" style="margin-top: 16px;">
                     <div>
                         <label>Nome da Playlist</label>
@@ -279,7 +296,7 @@
                     </div>
                 </div>
                 <div style="margin-top: 16px;">
-                    <label>Conteúdo M3U (opcional)</label>
+                    <label>Conteudo M3U (opcional)</label>
                     <textarea id="m3u_content" rows="6" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text);" placeholder="#EXTM3U\n#EXTINF:-1 tvg-logo=\"...\" group-title=\"...\", Canal X\nhttp://...\n..."></textarea>
                 </div>
                 <div class="actions" style="margin-top: 12px;">
@@ -288,7 +305,7 @@
                     <button class="btn" onclick="listChannels()">Carregar no Live TV</button>
                 </div>
                 <div class="card" id="playlists-card">
-                   <h3>📚 Playlists salvas</h3>
+                   <h3> Playlists salvas</h3>
                    <div class="actions" style="margin-bottom:8px">
                      <button class="btn" onclick="listPlaylists()">Atualizar</button>
                    </div>
@@ -300,7 +317,7 @@
         </div>
 
         <div class="card requires-auth section" id="live-tv">
-            <h3>📺 Live TV</h3>
+            <h3> Live TV</h3>
             <div class="actions" style="margin-bottom:8px">
                 <button class="btn" onclick="setSection('home')">Menu</button>
                 <button class="btn" onclick="listChannels()">Atualizar Lista</button>
@@ -330,7 +347,7 @@
         </div>
 
         <div class="card section" id="section-movies">
-            <h3>🎬 Filmes</h3>
+            <h3> Filmes</h3>
             <div class="actions" style="margin-bottom:8px">
                 <button class="btn" onclick="setSection('home')">Menu</button>
                 <button class="btn" onclick="loadSectionCatalog('movies')">Atualizar Lista</button>
@@ -360,7 +377,7 @@
         </div>
 
         <div class="card section" id="section-series">
-            <h3>📽️ Séries</h3>
+            <h3> Series</h3>
             <div class="actions" style="margin-bottom:8px">
                 <button class="btn" onclick="setSection('home')">Menu</button>
                 <button class="btn" onclick="loadSectionCatalog('series')">Atualizar Lista</button>
@@ -369,8 +386,8 @@
                 <div class="live-sidebar">
                     <div style="font-weight:700;margin-bottom:6px;">Categorias</div>
                     <ul id="series-categories" class="list" style="max-height:160px;overflow:auto"></ul>
-                    <div style="font-weight:700;margin:10px 0 6px;">Episódios</div>
-                    <input id="series-search" type="text" placeholder="Buscar séries..." />
+                    <div style="font-weight:700;margin:10px 0 6px;">Episodios</div>
+                    <input id="series-search" type="text" placeholder="Buscar series..." />
                     <div id="series-items" class="cards-grid"></div>
                 </div>
                 <div class="live-stage">
@@ -390,25 +407,89 @@
         </div>
 
         <div class="card section" id="section-archive">
-            <h3>🗂️ Arquivo</h3>
+            <h3> Arquivo</h3>
             <div class="actions" style="margin-bottom:8px">
                 <button class="btn" onclick="setSection('home')">Menu</button>
             </div>
-            <p class="muted">Área de arquivos e histórico. Em breve.</p>
+            <p class="muted">Area de arquivos e historico. Em breve.</p>
         </div>
 
         <div class="card requires-auth section" id="section-payments" data-section="settings">
-            <h3>💳 Configurações adicionais</h3>
-            <p class="muted">Integrações e pagamentos: em desenvolvimento.</p>
+            <h3> Configuracoes adicionais</h3>
+            <p class="muted">Integracoes e pagamentos: em desenvolvimento.</p>
         </div>
+        <div id="device-key-modal" class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Device key aprovada</h3>
+        <p id="device-key-description"></p>
+        <div class="modal-hint">
+          <div>Use esta chave ao acessar dispositivos permitidos.</div>
+          <div>Envie como cabecalho <span class="mono">X-Device-Key</span> junto do <span class="mono">X-Device-ID</span>.</div>
+          <div id="device-key-expiration"></div>
+        </div>
+        <div style="margin-top:16px;display:flex;align-items:center;gap:8px;">
+          <span class="mono" id="device-key-code" style="font-size:1rem;background:rgba(255,255,255,.08);padding:8px 12px;border-radius:10px;"></span>
+          <button class="btn" id="device-key-copy">Copiar</button>
+        </div>
+        <div id="device-key-copy-feedback" class="muted" style="font-size:0.85rem;margin-top:8px;"></div>
+        <div class="modal-actions">
+          <button class="btn" id="device-key-close">Entendi</button>
+        </div>
+      </div>
     </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
-        // Catálogo e reprodução por categoria
+        // Catalogo e reproducao por categoria
         const API_URL = window.location.origin;
         let _hls = null; let _hlsMap = {}; let _plyrMap = {};
+        let _pollingHandle = null;
+        const NOTIFICATION_INTERVAL_MS = 15000;
+
+        const STATUS_LABELS = {
+          pending: "Pendente",
+          approved: "Aprovada",
+          rejected: "Rejeitada",
+          active: "Ativa",
+          inactive: "Inativa"
+        };
+
+        function formatDateTime(value){
+          if(!value) return '-';
+          try{
+            return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+          }catch(_){
+            return value;
+          }
+        }
+
+        function createStatusBadge(status){
+          const normalized = (status || '').toLowerCase();
+          const classMap = {
+            pending: 'badge badge-pending',
+            approved: 'badge badge-approved',
+            rejected: 'badge badge-rejected',
+            active: 'badge badge-active',
+            inactive: 'badge badge-inactive'
+          };
+          const label = STATUS_LABELS[normalized] || (status ? status.toUpperCase() : 'STATUS');
+          const className = classMap[normalized] || 'badge badge-default';
+          return `<span class="${className}" title="Status: ${label}">${label}</span>`;
+        }
+
+        function renderDeviceChips(devices){
+          if(!devices || devices.length === 0){
+            return '<div class="muted" style="font-size:12px;">Dispositivo aguardando aprovacao.</div>';
+          }
+          return devices.map(device => {
+            const label = device.device_name || device.device_id;
+            const lastSeen = formatDateTime(device.last_seen);
+            const hardware = device.hardware_info ? ` | ${device.hardware_info}` : '';
+            return `<span class="device-chip" title="Ultimo acesso: ${lastSeen}${hardware ? hardware : ''}">${label}</span>`;
+          }).join('');
+        }
         
         function getToken(){ return localStorage.getItem('access_token'); }
         function getRefreshToken(){ return localStorage.getItem('refresh_token'); }
@@ -422,7 +503,7 @@
             const data = await res.json();
             if(!res.ok) return null;
             setTokens(data.access_token, data.refresh_token);
-            const msg = document.getElementById('auth-msg'); if(msg) msg.textContent = 'Sessão renovada';
+            const msg = document.getElementById('auth-msg'); if(msg) msg.textContent = 'Sessao renovada';
             return data.access_token;
           }catch(_){ return null; }
         }
@@ -451,9 +532,13 @@
           let opts = { ...options, headers: { ...(options.headers||{}) } };
           const deviceId = await getDeviceId();
           opts.headers['X-Device-ID'] = deviceId;
+          const deviceKey = localStorage.getItem('device_secret');
+          if(deviceKey){
+            opts.headers['X-Device-Key'] = deviceKey;
+          }
           if(requireAuth){
             const token = getToken();
-            if(!token) throw new Error('Faça login para continuar');
+            if(!token) throw new Error('Faca login para continuar');
             opts.headers['Authorization'] = `Bearer ${token}`;
           }
           let res = await fetch(url, opts);
@@ -534,7 +619,17 @@
           [...video.querySelectorAll('track')].forEach(t=>t.remove());
           video.appendChild(track);
         }
-        function proxify(url){ const did = localStorage.getItem('device_id') || ''; const token = localStorage.getItem('access_token') || ''; const qp = new URLSearchParams(); qp.append('url', url); if (did) qp.append('device_id', did); if (token) qp.append('token', token); return `${API_URL}/stream/m3u8?${qp.toString()}`; }
+        function proxify(url){
+          const did = localStorage.getItem('device_id') || '';
+          const token = localStorage.getItem('access_token') || '';
+          const deviceKey = localStorage.getItem('device_secret') || '';
+          const qp = new URLSearchParams();
+          qp.append('url', url);
+          if (did) qp.append('device_id', did);
+          if (deviceKey) qp.append('device_key', deviceKey);
+          if (token) qp.append('token', token);
+          return `${API_URL}/stream/m3u8?${qp.toString()}`;
+        }
         function playChannelFor(section, ch) {
           const map = { live:{video:'video-player', title:'player-title', msg:'player-msg'}, movies:{video:'video-movies', title:'movies-title', msg:'movies-msg'}, series:{video:'video-series', title:'series-title', msg:'series-msg'} };
           const title = document.getElementById(map[section].title);
@@ -560,13 +655,13 @@
                   maxBufferLength: 30,
                   xhrSetup: function(xhr, url){
                     if (token) xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-                    if (deviceId) xhr.setRequestHeader('X-Device-ID', deviceId);
+                    if (deviceId) xhr.setRequestHeader('X-Device-ID', deviceId);\n                    if (deviceKey) xhr.setRequestHeader('X-Device-Key', deviceKey);
                   },
                   fetchSetup: function(context, init){
                     init = init || {};
                     init.headers = { ...(init.headers || {}) };
                     if (token) init.headers['Authorization'] = 'Bearer ' + token;
-                    if (deviceId) init.headers['X-Device-ID'] = deviceId;
+                    if (deviceId) init.headers['X-Device-ID'] = deviceId;\n                    if (deviceKey) init.headers['X-Device-Key'] = deviceKey;
                     return new Request(context.url, init);
                   }
                 });
@@ -605,7 +700,7 @@
           const cat = (ch.category || '').toLowerCase();
           const url = (ch.url || '').toLowerCase();
           const isMovie = /(filme|filmes|movie|movies|cinema|vod)/.test(cat) || /\.(mp4|mkv|avi)$/.test(url) || /\/movie\//.test(url);
-          const isSeries = /(série|series|seriados|tv shows)/.test(cat) || /\/series\//.test(url) || /\/serie\//.test(url);
+          const isSeries = /(serie|series|seriados|tv shows)/.test(cat) || /\/series\//.test(url) || /\/serie\//.test(url);
           if (isMovie) return 'movies';
           if (isSeries) return 'series';
           return 'live';
@@ -624,7 +719,7 @@
           try {
             msgEl.textContent = 'Carregando...';
             const channels = await fetchChannelsCache();
-            if (!channels || channels.length === 0) { msgEl.textContent = 'Faça login e importe uma playlist.'; return; }
+            if (!channels || channels.length === 0) { msgEl.textContent = 'Faca login e importe uma playlist.'; return; }
         
             const filtered = channels.filter(ch => inferType(ch) === section);
             const counts = {};
@@ -683,16 +778,16 @@
           });
         })();
         
-        // Ingestão M3U
+        // Ingestao M3U
         async function ingestM3U() {
           const token = getToken();
           const name = document.getElementById('m3u_name').value || 'Playlist';
           const url = document.getElementById('m3u_url').value || null;
           const content = document.getElementById('m3u_content').value || null;
           const msg = document.getElementById('channels-msg');
-          const btn = document.querySelector('button.btn:nth-of-type(1)'); // botão "Importar/Inserir M3U"
-          if (!token) { msg.textContent = 'Faça login primeiro'; return; }
-          if (!url && !content) { msg.textContent = 'Informe URL ou cole o conteúdo'; return; }
+          const btn = document.querySelector('button.btn:nth-of-type(1)'); // botao "Importar/Inserir M3U"
+          if (!token) { msg.textContent = 'Faca login primeiro'; return; }
+          if (!url && !content) { msg.textContent = 'Informe URL ou cole o conteudo'; return; }
           // loading state
           const original = btn ? btn.textContent : '';
           if (btn) { btn.disabled = true; btn.textContent = 'Carregando...'; }
@@ -701,7 +796,7 @@
             const params = new URLSearchParams(); params.append('name', name); if (url) params.append('url', url); if (content) params.append('content', content);
             const res = await apiFetch(`${API_URL}/catalog/m3u/ingest?${params.toString()}`, { method: 'POST' }, true);
             const data = await res.json();
-            if (!res.ok) throw new Error(data.detail || 'Erro na ingestão');
+            if (!res.ok) throw new Error(data.detail || 'Erro na ingestao');
             msg.textContent = `Playlist salva com sucesso. Canais ingeridos: ${data.length}`;
             window._channels = null; // recarregar cache
             loadSectionCatalog('live');
@@ -717,7 +812,7 @@
           const token = getToken();
           const msg = document.getElementById('playlists-msg');
           const ul = document.getElementById('playlists-list');
-          if (!token) { msg.textContent = 'Faça login para ver suas playlists.'; return; }
+          if (!token) { msg.textContent = 'Faca login para ver suas playlists.'; return; }
           msg.textContent = 'Carregando playlists...';
           ul.innerHTML = '';
           try {
@@ -732,7 +827,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
                   <div style="flex:1;">
                     <div style="font-weight:600;">${p.name}</div>
-                    <div class="muted" style="font-size:12px;">${p.url ? 'Remota' : 'Local'} • Canais: ${p.channels_count} • Atualizada: ${p.last_updated || '-'}</div>
+                    <div class="muted" style="font-size:12px;">${p.url ? 'Remota' : 'Local'}  Canais: ${p.channels_count}  Atualizada: ${p.last_updated || '-'}</div>
                   </div>
                   <div style="display:flex;gap:6px;">
                     <button class="btn" style="padding:6px 10px" onclick="editPlaylist(${p.id})">Editar</button>
@@ -759,7 +854,7 @@
         }
         async function deletePlaylist(id){
           const token = getToken(); if(!token) return;
-          if(!confirm('Excluir esta playlist? Isso remove apenas o registro, não os canais já ingeridos.')) return;
+          if(!confirm('Excluir esta playlist? Isso remove apenas o registro, nao os canais ja ingeridos.')) return;
           try {
             const res = await apiFetch(`${API_URL}/catalog/playlists/${id}`, { method:'DELETE' }, true);
             if(!res.ok){ const data = await res.json(); throw new Error(data.detail || 'Erro ao excluir'); }
@@ -767,7 +862,7 @@
           } catch(e){ alert(e.message); }
         }
         
-        // API status e auth básico
+        // API status e auth basico
         function setStatus(online) {
           const dot = document.getElementById('api-status');
           const text = document.getElementById('api-text');
@@ -783,7 +878,7 @@
               const data = await res.json();
               ok = data && (data.status === 'ok' || data.status === 'healthy');
             } catch (_) {
-              ok = res.ok; // se não for JSON, usa o status HTTP
+              ok = res.ok; // se nao for JSON, usa o status HTTP
             }
             setStatus(ok);
           } catch (e) {
@@ -795,12 +890,12 @@
           // Mostrar/ocultar tiles que requerem login
           const authedTiles = document.querySelectorAll('#section-home .requires-auth');
           authedTiles.forEach(el => { el.style.display = token ? '' : 'none'; });
-          // Se estiver deslogado, abrir explicitamente a seção de conta
+          // Se estiver deslogado, abrir explicitamente a secao de conta
           if(!token){
             setSection('account');
           }
         }
-        function logoutUser(){ localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); updateAuthUI(); document.getElementById('auth-msg').textContent = 'Logout realizado'; document.getElementById('token-msg').textContent=''; }
+        function logoutUser(){ localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); localStorage.removeItem('device_secret'); sessionStorage.removeItem('device_secret_last_shown'); stopAdminPolling(); hideDeviceKeyModal(); applyProfile(null); updateAuthUI(); document.getElementById('auth-msg').textContent = 'Logout realizado'; document.getElementById('token-msg').textContent=''; }
         async function registerUser(){
           const email = document.getElementById('email').value.trim();
           const full_name = document.getElementById('full_name').value.trim();
@@ -817,11 +912,10 @@
           const msg = document.getElementById('auth-msg'); const tokenMsg = document.getElementById('token-msg'); msg.textContent='Logando...'; tokenMsg.textContent='';
           try {
             const res = await fetch(`${API_URL}/auth/login`, { method: 'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password }) });
-            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Credenciais inválidas');
+            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Credenciais invalidas');
             localStorage.setItem('access_token', data.access_token); localStorage.setItem('refresh_token', data.refresh_token);
             msg.textContent='Login realizado'; tokenMsg.textContent = `access_token: ${data.access_token.slice(0,24)}...`;
             updateAuthUI();
-            // Persistência opcional do login
             const remember = document.getElementById('remember-login')?.checked;
             if(remember){
               localStorage.setItem('saved_email', email);
@@ -832,140 +926,408 @@
               localStorage.removeItem('saved_password');
               localStorage.removeItem('remember_login');
             }
-            // Garantir dispositivo vinculado e ativo
-            ensureDeviceBound();
-            // Ir direto para o menu inicial após login
+            await fetchProfile(false);
+            await refreshLicenseData();
             setSection('home');
           } catch(e){ msg.textContent = 'Erro: ' + (e && e.message ? e.message : (e && e.detail) || (typeof e === 'string' ? e : JSON.stringify(e))); }
         }
-        async function getProfile(){
-          const token = localStorage.getItem('access_token'); const msg = document.getElementById('auth-msg'); const tokenMsg = document.getElementById('token-msg'); if(!token){ msg.textContent='Faça login primeiro'; return; }
-          try { const res = await apiFetch(`${API_URL}/auth/me`, { headers:{ 'Authorization': `Bearer ${token}` } }); const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Token inválido'); msg.textContent = `Usuário: ${data.email}`; tokenMsg.textContent = `admin=${data.is_admin} ativo=${data.is_active}`; }
-          catch(e){ msg.textContent = 'Erro: ' + (e && e.message ? e.message : (e && e.detail) || (typeof e === 'string' ? e : JSON.stringify(e))); }
-        }
-        
-        // Licenças e dispositivos
-        async function issueLicense(){
-          const plan = (document.getElementById('plan_name')?.value || 'basic');
-          const max = parseInt(document.getElementById('max_devices')?.value || '1', 10);
-          const msg = document.getElementById('licenses-msg');
-          if(msg) msg.textContent = 'Emitindo licença...';
+
+        async function fetchProfile(showMessages = false){
+          const token = getToken();
+          const msg = document.getElementById('auth-msg');
+          const tokenMsg = document.getElementById('token-msg');
+          if(!token){
+            if(showMessages && msg) msg.textContent = 'Faca login primeiro';
+            applyProfile(null);
+            return null;
+          }
+          if(showMessages && msg) msg.textContent = 'Carregando perfil...';
           try {
-            const res = await apiFetch(`${API_URL}/licenses/issue`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ plan_name: plan, max_devices: max }) }, true);
+            const res = await apiFetch(`${API_URL}/auth/me`, {}, true);
             const data = await res.json();
-            if(!res.ok) throw new Error(data.detail || 'Erro ao emitir licença');
-            if(msg) msg.textContent = `Licença emitida: ${data.license_key} (id=${data.id})`;
-            listMyLicenses();
-          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+            if(!res.ok) throw new Error(data.detail || 'Token invalido');
+            if(showMessages && msg) msg.textContent = `Usuario: ${data.email}`;
+            if(showMessages && tokenMsg) tokenMsg.textContent = `admin=${data.is_admin} ativo=${data.is_active}`;
+            applyProfile(data);
+            return data;
+          } catch(e){
+            if(showMessages && msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+            return null;
+          }
         }
-        async function listMyLicenses(){
-          const ul = document.getElementById('licenses-list');
+
+        async function getProfile(){
+          await fetchProfile(true);
+        }
+
+        
+        // Licencas e dispositivos
+
+
+
+        function showDeviceKeyModal(secret, info){
+          const modal = document.getElementById('device-key-modal');
+          if(!modal) return;
+          const codeEl = document.getElementById('device-key-code');
+          const descEl = document.getElementById('device-key-description');
+          const expEl = document.getElementById('device-key-expiration');
+          const feedback = document.getElementById('device-key-copy-feedback');
+          if(codeEl) codeEl.textContent = secret || '';
+          const plan = info && info.plan ? info.plan : 'plano';
+          const device = info && info.device ? info.device : 'seu dispositivo';
+          if(descEl) descEl.textContent = `Plano ${plan} autorizado para ${device}.`;
+          if(expEl) expEl.textContent = info && info.approved_at ? `Aprovado em ${formatDateTime(info.approved_at)}.` : 'Guarde esta chave com seguranca.';
+          if(feedback) feedback.textContent = '';
+          modal.classList.add('show');
+          modal.dataset.secret = secret || '';
+        }
+
+        function hideDeviceKeyModal(){
+          const modal = document.getElementById('device-key-modal');
+          if(modal){
+            modal.classList.remove('show');
+            delete modal.dataset.secret;
+          }
+        }
+
+        async function copyDeviceKey(){
+          const modal = document.getElementById('device-key-modal');
+          if(!modal) return;
+          const secret = modal.dataset.secret || document.getElementById('device-key-code')?.textContent || '';
+          const feedback = document.getElementById('device-key-copy-feedback');
+          if(!secret){
+            if(feedback) feedback.textContent = 'Nenhuma chave disponivel.';
+            return;
+          }
+          try{
+            if(navigator.clipboard && navigator.clipboard.writeText){
+              await navigator.clipboard.writeText(secret);
+            }else{
+              const temp = document.createElement('textarea');
+              temp.value = secret;
+              document.body.appendChild(temp);
+              temp.select();
+              document.execCommand('copy');
+              document.body.removeChild(temp);
+            }
+            if(feedback) feedback.textContent = 'Chave copiada para a area de transferencia.';
+          }catch(err){
+            if(feedback) feedback.textContent = 'Nao foi possivel copiar automaticamente.';
+          }
+        }
+
+        function attachDeviceKeyModal(){
+          const modal = document.getElementById('device-key-modal');
+          if(!modal) return;
+          if(modal.dataset.bound) return;
+          modal.dataset.bound = '1';
+          const closeBtn = document.getElementById('device-key-close');
+          const copyBtn = document.getElementById('device-key-copy');
+          if(closeBtn) closeBtn.addEventListener('click', hideDeviceKeyModal);
+          if(copyBtn) copyBtn.addEventListener('click', copyDeviceKey);
+          modal.addEventListener('click', (ev)=>{ if(ev.target === modal) hideDeviceKeyModal(); });
+          document.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape') hideDeviceKeyModal(); });
+        }
+
+        async function pollAdminNotifications(){
+          if(!(window._profile && window._profile.is_admin)) return;
+          try {
+            const res = await apiFetch(`${API_URL}/licenses/admin/notifications/unread-count`, {}, true);
+            const data = await res.json();
+            if(res.ok && data){
+              const badge = document.getElementById('admin-new-requests-badge');
+              const count = data.count || 0;
+              if(badge){
+                badge.textContent = count > 0 ? count : '';
+                badge.style.display = count > 0 ? 'inline-flex' : 'none';
+              }
+            }
+          } catch(_){}
+        }
+
+        function startAdminPolling(){
+          if(_pollingHandle) return;
+          pollAdminNotifications();
+          _pollingHandle = setInterval(()=>{
+            pollAdminNotifications();
+          }, NOTIFICATION_INTERVAL_MS);
+        }
+
+        function stopAdminPolling(){
+          if(_pollingHandle){
+            clearInterval(_pollingHandle);
+            _pollingHandle = null;
+          }
+          const badge = document.getElementById('admin-new-requests-badge');
+          if(badge){
+            badge.textContent = '';
+            badge.style.display = 'none';
+          }
+        }
+
+        async function submitLicenseRequest(){
+          const msg = document.getElementById('license-requests-msg');
+          localStorage.removeItem('device_secret');
+          if(msg) msg.textContent = 'Enviando solicitacao...';
+          try {
+            const plan = (document.getElementById('plan_name')?.value || 'basic');
+            const deviceName = (document.getElementById('device_friendly_name')?.value || '').trim();
+            const deviceId = await getDeviceId();
+            const payload = {
+              plan_name: plan,
+              device_id: deviceId,
+              device_name: deviceName || null,
+              device_info: navigator.userAgent || null,
+            };
+            const res = await apiFetch(`${API_URL}/licenses/requests`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }, true);
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.detail || 'Erro ao solicitar licenca');
+            if(msg) msg.textContent = 'Solicitacao enviada. Aguarde aprovacao.';
+            refreshLicenseData();
+          } catch(e){
+            if(badge){ badge.textContent = ''; badge.style.display = 'none'; }
+            if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+          }
+        }
+
+        async function loadLicenseRequests(){
+          const list = document.getElementById('license-requests-list');
+          const msg = document.getElementById('license-requests-msg');
+          if(!list) return;
+          list.innerHTML = '';
+          if(msg) msg.textContent = 'Carregando solicitacoes...';
+          localStorage.removeItem('device_secret');
+          try {
+            const res = await apiFetch(`${API_URL}/licenses/requests/me`, {}, true);
+            const items = await res.json();
+            if(!res.ok) throw new Error(items.detail || 'Erro ao listar solicitacoes');
+            if(!items || items.length === 0){
+              if(msg) msg.textContent = 'Nenhuma solicitacao enviada.';
+              return;
+            }
+            if(msg) msg.textContent = `Total: ${items.length}`;
+            let storedSecret = null;
+            items.forEach(req => {
+              if(req.status === 'approved' && req.device_secret && !storedSecret){
+                storedSecret = req.device_secret;
+                localStorage.setItem('device_secret', req.device_secret);
+                const lastShown = sessionStorage.getItem('device_secret_last_shown');
+                if(lastShown !== req.device_secret){
+                  sessionStorage.setItem('device_secret_last_shown', req.device_secret);
+                  showDeviceKeyModal(req.device_secret, { plan: req.plan_name, device: req.device_name || req.device_id, approved_at: req.decided_at });
+                }
+              }
+              const badgeEl = createStatusBadge(req.status);
+              const requestedAt = formatDateTime(req.requested_at);
+              const decidedAt = req.decided_at ? formatDateTime(req.decided_at) : null;
+              const secretLine = (req.status === 'approved' && req.device_secret)
+                ? `<div class="muted" style="font-size:12px;">Device key: <span class="mono">${req.device_secret}</span></div>`
+                : '';
+              const notesLine = req.notes ? `<div class="muted" style="font-size:12px;">Observacao: ${req.notes}</div>` : '';
+              const adminNotesLine = req.admin_notes ? `<div class="muted" style="font-size:12px;">Notas admin: ${req.admin_notes}</div>` : '';
+              const li = document.createElement('li');
+              li.innerHTML = `<div>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                  <div style="font-weight:600;">${req.plan_name}</div>
+                  ${badgeEl}
+                </div>
+                <div class="muted" style="font-size:12px;">Dispositivo: ${req.device_name || req.device_id}</div>
+                <div class="muted" style="font-size:12px;">Solicitado: ${requestedAt}${decidedAt ? ` - Atualizado: ${decidedAt}` : ''}</div>
+                ${secretLine}
+                ${notesLine}
+                ${adminNotesLine}
+              </div>`;
+              list.appendChild(li);
+            });
+          } catch(e){
+            if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+          }
+        }
+
+        async function loadLicenses(){
+          const list = document.getElementById('licenses-list');
           const msg = document.getElementById('licenses-msg');
-          if(msg) msg.textContent = 'Carregando licenças...';
-          if(ul) ul.innerHTML = '';
+          if(!list) return;
+          list.innerHTML = '';
+          if(msg) msg.textContent = 'Carregando licencas...';
           try {
             const res = await apiFetch(`${API_URL}/licenses/me`, {}, true);
             const items = await res.json();
-            if(!res.ok) throw new Error(items.detail || 'Erro ao listar licenças');
-            if(!items || items.length === 0){ if(msg) msg.textContent = 'Nenhuma licença.'; return; }
+            if(!res.ok) throw new Error(items.detail || 'Erro ao listar licencas');
+            if(!items || items.length === 0){
+              if(msg) msg.textContent = 'Nenhuma licenca ativa.';
+              return;
+            }
             if(msg) msg.textContent = `Total: ${items.length}`;
-            items.forEach(l => {
+            items.forEach(lic => {
+              const expires = formatDateTime(lic.expires_at);
+              const issued = formatDateTime(lic.issued_at);
+              const badge = createStatusBadge(lic.is_active ? 'active' : 'inactive');
+              const devices = renderDeviceChips(lic.devices || []);
               const li = document.createElement('li');
-              li.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
-                <div style="flex:1;">
-                  <div style="font-weight:600;">${l.plan_name} • ${l.license_key}</div>
-                  <div class="muted" style="font-size:12px;">id=${l.id} • dispositivos: ${l.max_devices} • ${(l.is_active?'Ativa':'Inativa')}</div>
+              li.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                  <div style="font-weight:600;">${lic.plan_name} - ${lic.license_key}</div>
+                  ${badgeEl}
                 </div>
-                <div style="display:flex;gap:6px;">
-                  <button class="btn" style="padding:6px 10px" onclick="document.getElementById('toggle_license_id').value=${l.id}; activateLicense()">Ativar</button>
-                  <button class="btn" style="padding:6px 10px;background:#991b1b" onclick="document.getElementById('toggle_license_id').value=${l.id}; deactivateLicense()">Desativar</button>
-                </div>
+                <div class="muted" style="font-size:12px;">Emitida: ${issued} • Expira: ${expires}</div>
+                ${devices}
               </div>`;
-              ul?.appendChild(li);
+              list.appendChild(li);
             });
-          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+          } catch(e){
+            if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+          }
         }
-        async function deactivateLicense(){
-          const id = parseInt(document.getElementById('toggle_license_id')?.value || '0', 10);
-          const msg = document.getElementById('licenses-msg'); if(!id){ if(msg) msg.textContent = 'Informe o ID da licença'; return; }
-          if(msg) msg.textContent = 'Desativando...';
+
+        async function refreshLicenseData(){
+          if(!getToken()) return;
+          await loadLicenseRequests();
+          await loadLicenses();
+        }
+
+        async function loadAdminRequests(){
+          const card = document.getElementById('admin-requests-card');
+          if(!card || card.style.display === 'none') return;
+          const list = document.getElementById('admin-requests-list');
+          const msg = document.getElementById('admin-requests-msg');
+          const badge = document.getElementById('admin-new-requests-badge');
+          if(list) list.innerHTML = '';
+          if(msg) msg.textContent = 'Carregando solicitacoes...';
           try {
-            const res = await apiFetch(`${API_URL}/licenses/${id}/deactivate`, { method:'POST' }, true);
-            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao desativar');
-            if(msg) msg.textContent = `Licença ${data.id} desativada`;
-            listMyLicenses();
-          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+            const res = await apiFetch(`${API_URL}/licenses/admin/requests`, {}, true);
+            const items = await res.json();
+            if(!res.ok) throw new Error(items.detail || 'Erro ao listar solicitacoes');
+            const pendingCount = (items || []).filter(req => req.status === 'pending').length;
+            if(badge){
+              badge.textContent = pendingCount > 0 ? pendingCount : '';
+              badge.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
+            }
+            if(!items || items.length === 0){
+              if(msg) msg.textContent = 'Nenhuma solicitacao pendente.';
+              return;
+            }
+            if(msg) msg.textContent = `Total: ${items.length}`;
+            items.forEach(req => {
+              const li = document.createElement('li');
+              const badgeEl = createStatusBadge(req.status);
+              const secretLine = req.device_secret ? `<div class="muted" style="font-size:12px;">Device key: <span class="mono">${req.device_secret}</span></div>` : '';
+              const notesLine = req.admin_notes ? `<div class="muted" style="font-size:12px;">Notas admin: ${req.admin_notes}</div>` : '';
+              const requestedAt = formatDateTime(req.requested_at);
+              const decidedAt = req.decided_at ? formatDateTime(req.decided_at) : null;
+              const actions = req.status === 'pending'
+                ? `<div style="display:flex;gap:6px;margin-top:8px;">
+                    <button class="btn" style="padding:6px 10px" onclick="adminApproveRequest(${req.id})">Aprovar</button>
+                    <button class="btn" style="padding:6px 10px;background:#991b1b" onclick="adminRejectRequest(${req.id})">Rejeitar</button>
+                   </div>`
+                : '';
+              const userLabel = req.user_email ? `${req.user_email} (ID ${req.user_id})` : `ID ${req.user_id}`;
+              li.innerHTML = `<div>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                  <div style="font-weight:600;">${req.plan_name}</div>
+                  ${badge}
+                </div>
+                <div class="muted" style="font-size:12px;">Usuario ${userLabel} - ${req.device_name || req.device_id}</div>
+                <div class="muted" style="font-size:12px;">Solicitado: ${requestedAt}${decidedAt ? ` - Atualizado: ${decidedAt}` : ''}</div>
+                ${secretLine}
+                ${notesLine}
+                ${actions}
+              </div>`;
+              list.appendChild(li);
+            });
+          } catch(e){
+            if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+          }
         }
-        async function activateLicense(){
-          const id = parseInt(document.getElementById('toggle_license_id')?.value || '0', 10);
-          const msg = document.getElementById('licenses-msg'); if(!id){ if(msg) msg.textContent = 'Informe o ID da licença'; return; }
-          if(msg) msg.textContent = 'Ativando...';
+
+        async function adminApproveRequest(id){
+          const msg = document.getElementById('admin-requests-msg');
+          if(msg) msg.textContent = 'Aprovando...';
           try {
-            const res = await apiFetch(`${API_URL}/licenses/${id}/activate`, { method:'POST' }, true);
-            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao ativar');
-            if(msg) msg.textContent = `Licença ${data.id} ativada`;
-            listMyLicenses();
-          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+            const adminNotes = prompt('Notas para o cliente (opcional):') || null;
+            const payload = { expires_in_days: 30 };
+            if(adminNotes) payload.admin_notes = adminNotes;
+            const res = await apiFetch(`${API_URL}/licenses/admin/requests/${id}/approve`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }, true);
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.detail || 'Erro ao aprovar licenca');
+            msg.textContent = `Licenca ${data.license.license_key} aprovada.`;
+            if(data.device && data.device.device_secret){
+              alert(`Device key aprovada: ${data.device.device_secret}`);
+            }
+            loadAdminRequests();
+            refreshLicenseData();
+          } catch(e){
+            if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+          }
         }
-        async function bindDevice(){
-          const license_id = parseInt(document.getElementById('bind_license_id')?.value || '0', 10);
-          const device_id = (document.getElementById('bind_device_id')?.value || '').trim();
-          const device_name = (document.getElementById('bind_device_name')?.value || '').trim();
-          const msg = document.getElementById('devices-msg');
-          if(!license_id || !device_id){ if(msg) msg.textContent = 'Informe licença e dispositivo'; return; }
-          if(msg) msg.textContent = 'Vinculando...';
+
+        async function adminRejectRequest(id){
+          const msg = document.getElementById('admin-requests-msg');
+          if(msg) msg.textContent = 'Rejeitando...';
           try {
-            const res = await apiFetch(`${API_URL}/devices/bind`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ license_id, device_id, device_name: device_name || null }) }, true);
-            const data = await res.json(); if(!res.ok) throw new Error(data.detail || 'Erro ao vincular');
-            if(msg) msg.textContent = `Dispositivo vinculado: id=${data.id}`;
-          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
+            const adminNotes = prompt('Motivo da rejeicao (opcional):') || null;
+            const payload = adminNotes ? { admin_notes: adminNotes } : {};
+            const res = await apiFetch(`${API_URL}/licenses/admin/requests/${id}/reject`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) }, true);
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.detail || 'Erro ao rejeitar licenca');
+            msg.textContent = 'Pedido rejeitado.';
+            loadAdminRequests();
+            refreshLicenseData();
+          } catch(e){
+            if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+          }
         }
-        async function listMyDevices(){
-          const msg = document.getElementById('devices-msg');
+
+        async function loadAdminDevices(){
+          const list = document.getElementById('admin-devices-list');
+          const msg = document.getElementById('admin-devices-msg');
+          if(!list || !(window._profile && window._profile.is_admin)) return;
+          list.innerHTML = '';
           if(msg) msg.textContent = 'Carregando dispositivos...';
           try {
             const res = await apiFetch(`${API_URL}/devices/me`, {}, true);
             const items = await res.json();
             if(!res.ok) throw new Error(items.detail || 'Erro ao listar dispositivos');
-            const ul = document.getElementById('devices-list');
-            if(ul){ ul.innerHTML = ''; (items||[]).forEach(d=>{ const li=document.createElement('li'); li.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px"><div><div style="font-weight:600">${d.device_name||'Sem nome'}</div><div class="muted" style="font-size:12px">id=${d.id} • device_id=${d.device_id} • ${(d.is_active?'Ativo':'Inativo')}</div></div></div>`; ul.appendChild(li); }); }
-            if(msg) msg.textContent = `Total: ${(items||[]).length}`;
-          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
-        }
-        async function unbindDevice(){
-          const msg = document.getElementById('devices-msg');
-          if(msg) msg.textContent = 'Desvincular dispositivo: endpoint não disponível ainda.';
-        }
-        async function heartbeatDevice(){
-          const msg = document.getElementById('devices-msg');
-          const device_id = await getDeviceId();
-          if(msg) msg.textContent = 'Enviando heartbeat...';
-          try {
-            const res = await apiFetch(`${API_URL}/devices/heartbeat`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ device_id }) }, true);
-            const data = await res.json();
-            if(!res.ok) throw new Error(data.detail || 'Erro no heartbeat');
-            if(msg) msg.textContent = `Heartbeat OK: id=${data.id}`;
-          } catch(e){ if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e)); }
-        }
-        async function ensureDeviceBound(){
-          try{
-            const token = getToken(); if(!token) return;
-            const device_id = await getDeviceId();
-            // Licenças
-            const resLic = await apiFetch(`${API_URL}/licenses/me`, {}, true);
-            const licenses = await resLic.json(); if(!resLic.ok || !licenses || licenses.length===0) return;
-            const active = licenses.find(l=>l.is_active) || licenses[0];
-            // Dispositivos atuais
-            let exists = false; try{ const resDev = await apiFetch(`${API_URL}/devices/me`, {}, true); if(resDev.ok){ const devs = await resDev.json(); exists = (devs||[]).some(d=> d.device_id === device_id && d.is_active); } }catch(_){ }
-            if(!exists){ await apiFetch(`${API_URL}/devices/bind`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ license_id: active.id, device_id, device_name: (navigator.platform||'WebPlayer') }) }, true); }
-            await apiFetch(`${API_URL}/devices/heartbeat`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ device_id }) }, true);
-          }catch(e){ try{ debugError('ensureDeviceBound: ' + (e?.message || JSON.stringify(e))); }catch(_){ /* noop */ } }
+            if(!items || items.length === 0){
+              if(msg) msg.textContent = 'Nenhum dispositivo registrado.';
+              return;
+            }
+            if(msg) msg.textContent = `Total: ${items.length}`;
+            items.forEach(dev => {
+              const li = document.createElement('li');
+              const lastSeen = formatDateTime(dev.last_seen);
+              li.innerHTML = `<div>
+                <div style="font-weight:600;">${dev.device_name || dev.device_id}</div>
+                <div class="muted" style="font-size:12px;">Device ID: ${dev.device_id}  Licenca ${dev.license_id}  Usuario ${dev.user_id}</div>
+                <div class="muted" style="font-size:12px;">Ultimo acesso: ${lastSeen}</div>
+              </div>`;
+              list.appendChild(li);
+            });
+          } catch(e){
+            if(msg) msg.textContent = 'Erro: ' + (e?.message || JSON.stringify(e));
+          }
         }
 
-        // Navegação: carregar catálogos ao abrir cada seção
+        function applyProfile(profile){
+          window._profile = profile || null;
+          const isAdmin = !!(profile && profile.is_admin);
+          const adminCards = document.querySelectorAll('.admin-only');
+          adminCards.forEach(card => { card.style.display = isAdmin ? '' : 'none'; });
+          if(isAdmin){
+          if(isAdmin){
+            startAdminPolling();
+            loadAdminRequests();
+            loadAdminDevices();
+          } else {
+            stopAdminPolling();
+            const adminMsg = document.getElementById('admin-requests-msg');
+            if(adminMsg) adminMsg.textContent = '';
+          }
+        }
+        // Navegacao: carregar catalogos ao abrir cada secao
         function setSection(sec){
           const token = getToken();
-          // Gate: sem login só permite "account"
+          // Gate: sem login so permite "account"
           if(!token && sec !== 'account'){
             document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
             const acc = document.getElementById('section-account'); if(acc) acc.classList.add('active');
@@ -978,12 +1340,14 @@
             document.getElementById('section-settings').classList.add('active');
             document.getElementById('settings-grid').classList.add('active');
             document.getElementById('section-payments').classList.add('active');
-            // Mostrar todos os cards da grid
             const grid = document.getElementById('settings-grid');
             if(grid){ Array.from(grid.querySelectorAll('.card')).forEach(c=> c.style.display = ''); }
+            refreshLicenseData();
+            loadAdminRequests();
+            loadAdminDevices();
           }
           if(sec==='playlist'){
-            // Reutiliza a grid de configurações mostrando apenas o card de playlist
+            // Reutiliza a grid de configuracoes mostrando apenas o card de playlist
             const grid = document.getElementById('settings-grid');
             if(grid){
               grid.classList.add('active');
@@ -997,7 +1361,7 @@
         }
         
         // Boot
-        checkAPI(); updateAuthUI(); getDeviceId();
+        checkAPI(); updateAuthUI(); getDeviceId();\n        (async () => {\n          if(getToken()){\n            await fetchProfile(false);\n            await refreshLicenseData();\n          }\n        })();
 
         // Debug init
         (function(){
@@ -1013,7 +1377,7 @@
           function hide(){ if(panel) panel.style.display='none'; }
           if(toggle) toggle.onclick = ()=>{ if(panel && panel.style.display==='block') hide(); else show(); };
           if(closeBtn) closeBtn.onclick = hide;
-          // abrir por padrão para facilitar inspeção
+          // abrir por padrao para facilitar inspecao
           show();
 
           window.addEventListener('error', (e)=>{ debugError(`${e.message} (${e.filename}:${e.lineno})`); });
@@ -1036,7 +1400,7 @@
           debugLog('Debug iniciado. API_URL=' + (window.API_URL || 'indefinido'));
         })();
 
-        // Inicialização: lembrar login e botão de olho
+        // Inicializacao: lembrar login e botao de olho
         function loadRememberedLogin(){
           try{
             const remember = localStorage.getItem('remember_login') === '1';
@@ -1059,12 +1423,12 @@
             btn.addEventListener('click', ()=>{
               const hidden = input.type === 'password';
               input.type = hidden ? 'text' : 'password';
-              btn.textContent = hidden ? '🙈' : '👁️';
+              btn.textContent = hidden ? '' : '';
               btn.setAttribute('aria-label', hidden ? 'Ocultar senha' : 'Mostrar senha');
             });
           }
         }
-        document.addEventListener('DOMContentLoaded', ()=>{ loadRememberedLogin(); initPasswordToggle(); });
+        document.addEventListener('DOMContentLoaded', ()=>{ loadRememberedLogin(); initPasswordToggle(); attachDeviceKeyModal(); });
         </script>
   <!-- Debug UI -->
   <button id="debug-toggle" class="debug-toggle">Debug</button>
@@ -1074,3 +1438,11 @@
   </div>
 </body>
 </html>
+
+
+
+
+
+
+
+

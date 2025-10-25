@@ -1,4 +1,5 @@
-from datetime import datetime
+import json
+from datetime import datetime, timezone
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -8,6 +9,7 @@ from app.core.security import verify_token
 from app.db.session import get_db
 from app.models import Device, License, User
 from app.services.auth import get_user_by_email
+from app.services.licenses import verify_device_secret
 
 security = HTTPBearer()
 
@@ -42,6 +44,15 @@ async def get_current_active_user(
 ) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+def require_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator privileges required",
+        )
     return current_user
 
 
@@ -87,7 +98,7 @@ def current_user_from_request(
     return user
 
 
-def require_active_license(
+async def require_active_license(
     request: Request,
     current_user: User = Depends(current_user_from_request),
     db: Session = Depends(get_db),
@@ -103,57 +114,70 @@ def require_active_license(
             status_code=status.HTTP_403_FORBIDDEN, detail="No active license"
         )
 
+    now_utc = datetime.now(timezone.utc)
+    expires_at = license_record.expires_at
+    if expires_at:
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+        if expires_at <= now_utc:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="License expired"
+            )
+
     device_id = request.headers.get("X-Device-ID") or request.query_params.get(
         "device_id"
     )
-    device_name = request.headers.get("User-Agent")
-    if not device_id:
+    device_key = request.headers.get("X-Device-Key") or request.query_params.get(
+        "device_key"
+    )
+    if not device_id or not device_key:
+        body_data: dict[str, object] | None = None
+        content_type = (request.headers.get("content-type") or "").split(";", 1)[0].strip().lower()
+        if content_type == "application/json":
+            body_bytes = getattr(request, "_body", None)
+            if body_bytes is None:
+                body_bytes = await request.body()
+            request._body = body_bytes  # allow downstream handlers to reuse the body
+            if body_bytes:
+                try:
+                    body_data = json.loads(body_bytes)
+                except ValueError:
+                    body_data = {}
+            else:
+                body_data = {}
+            if not isinstance(body_data, dict):
+                body_data = {}
+        if isinstance(body_data, dict):
+            device_id = device_id or body_data.get("device_id")
+            device_key = device_key or body_data.get("device_secret") or body_data.get("device_key")
+    if not device_id or not device_key:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Device not provided"
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Device credentials not provided",
         )
 
     device = (
         db.query(Device)
-        .filter(Device.device_id == device_id, Device.user_id == current_user.id)
+        .filter(
+            Device.device_id == device_id,
+            Device.license_id == license_record.id,
+            Device.is_active.is_(True),
+        )
         .first()
     )
-
-    now = datetime.utcnow()
-    changed = False
-    if not device or not device.is_active:
-        current_count = (
-            db.query(Device)
-            .filter(Device.license_id == license_record.id, Device.is_active.is_(True))
-            .count()
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Device not authorized"
         )
-        if current_count >= license_record.max_devices:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Max devices reached for this license",
-            )
-        if not device:
-            device = Device(
-                device_id=device_id,
-                device_name=device_name,
-                user_id=current_user.id,
-                license_id=license_record.id,
-                is_active=True,
-                last_seen=now,
-            )
-            db.add(device)
-        else:
-            device.license_id = license_record.id
-            device.is_active = True
-            device.last_seen = now
-        changed = True
-    else:
-        if device.last_seen != now:
-            device.last_seen = now
-            changed = True
 
-    if changed:
-        db.commit()
-        db.refresh(device)
+    if not verify_device_secret(device, device_key):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid device key"
+        )
+
+    device.last_seen = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(device)
 
     return current_user
 

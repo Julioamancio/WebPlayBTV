@@ -24,6 +24,8 @@ Endpoints úteis:
 
 Configurações vivem em `backend/.env` (copie de `.env.example`).
 
+> ⚠️ Defina um `JWT_SECRET` forte ao configurar o `.env`. O backend valida os segredos no startup e só permite o valor de placeholder caso `ALLOW_INSECURE_DEFAULTS=1` esteja definido (uso local apenas).
+
 Gerar nova revisão:
 
 ```powershell

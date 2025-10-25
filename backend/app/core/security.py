@@ -5,7 +5,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-from app.core.config import get_settings
+from app.core.config import DEFAULT_JWT_SECRET, get_settings
 
 logger = logging.getLogger("webplayer.security")
 settings = get_settings()
@@ -49,8 +49,8 @@ def verify_token(token: str, token_type: str = "access") -> Optional[dict]:
         return None
 
 
-if settings.jwt_secret == "change-me-in-env":
+if settings.jwt_secret == DEFAULT_JWT_SECRET:
     logger.warning(
-        "JWT secret is using default value; set JWT_SECRET in environment for production use."
+        "JWT secret is using the placeholder value. Set JWT_SECRET to a strong random string; "
+        "current configuration relies on ALLOW_INSECURE_DEFAULTS for local development only."
     )
-

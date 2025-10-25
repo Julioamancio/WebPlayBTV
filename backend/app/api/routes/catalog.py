@@ -30,7 +30,8 @@ def ingest_m3u_playlist(
     content: Optional[str] = None,
     current_user: User = Depends(require_active_license),
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ):
     if not url and not content:
         raise HTTPException(status_code=400, detail="Provide url or content")
@@ -190,7 +191,8 @@ def update_playlist(
     payload: M3UPlaylistUpdate,
     current_user: User = Depends(require_active_license),
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ) -> M3UPlaylist:
     playlist = (
         db.query(M3UPlaylist)
@@ -227,7 +229,8 @@ def delete_playlist(
     playlist_id: int,
     current_user: User = Depends(require_active_license),
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ) -> dict[str, object]:
     playlist = (
         db.query(M3UPlaylist)

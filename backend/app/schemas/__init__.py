@@ -1,13 +1,11 @@
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
 class ORMModel(BaseModel):
-    class Config:
-        orm_mode = True
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserBase(BaseModel):
@@ -56,7 +54,42 @@ class LicenseResponse(LicenseBase, ORMModel):
     user_id: int
     is_active: bool
     expires_at: Optional[datetime]
+    issued_at: Optional[datetime]
+    approved_by: Optional[int]
+    request_id: Optional[int]
     created_at: datetime
+
+
+class LicenseDetailedResponse(LicenseResponse):
+    devices: List["DeviceResponse"] = Field(default_factory=list)
+
+
+class LicenseRequestCreate(BaseModel):
+    plan_name: str
+    device_id: str
+    device_name: Optional[str] = None
+    device_info: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class LicenseRequestResponse(ORMModel):
+    id: int
+    plan_name: str
+    max_devices: int
+    status: str
+    device_id: str
+    device_name: Optional[str]
+    device_info: Optional[str]
+    notes: Optional[str]
+    admin_notes: Optional[str]
+    device_secret: Optional[str]
+    requested_at: datetime
+    decided_at: Optional[datetime]
+
+
+class LicenseRequestAdminResponse(LicenseRequestResponse):
+    user_id: int
+    user_email: Optional[str] = None
 
 
 class DeviceBase(BaseModel):
@@ -73,8 +106,19 @@ class DeviceResponse(DeviceBase, ORMModel):
     user_id: int
     license_id: int
     is_active: bool
+    hardware_info: Optional[str]
     last_seen: Optional[datetime]
     created_at: datetime
+    updated_at: Optional[datetime]
+
+
+class DeviceWithSecret(DeviceResponse):
+    device_secret: Optional[str] = None
+
+
+class LicenseApprovalResult(BaseModel):
+    license: LicenseResponse
+    device: DeviceWithSecret
 
 
 class ChannelBase(BaseModel):
@@ -100,6 +144,7 @@ class DeviceUnbind(BaseModel):
 
 class DeviceHeartbeat(BaseModel):
     device_id: str
+    device_secret: Optional[str] = None
 
 
 class M3UPlaylistResponse(ORMModel):
@@ -118,4 +163,23 @@ class M3UPlaylistUpdate(BaseModel):
     name: Optional[str] = None
     url: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+class AdminNotificationResponse(ORMModel):
+    id: int
+    type: str
+    message: str
+    payload: Optional[str]
+    is_read: bool
+    created_at: datetime
+    read_at: Optional[datetime]
+
+
+class LicenseApproval(BaseModel):
+    expires_in_days: int = 30
+    admin_notes: Optional[str] = None
+
+
+class LicenseRejection(BaseModel):
+    admin_notes: Optional[str] = None
 

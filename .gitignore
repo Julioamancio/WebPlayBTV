@@ -6,10 +6,13 @@ __pycache__/
 
 # Virtual env
 venv/
+.venv/
+backend/.venv/
 
 # Databases
 webplay.db
 *.sqlite3
+*.log
 
 # Env files
 .env

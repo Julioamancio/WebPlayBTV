@@ -26,7 +26,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 def register_user(
     payload: UserCreate,
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ):
     if get_user_by_email(db, payload.email):
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -45,7 +46,8 @@ def register_user(
 def login_user(
     payload: LoginRequest,
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ):
     user = authenticate_user(db, payload.email, payload.password)
 

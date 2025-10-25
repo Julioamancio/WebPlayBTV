@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.api.deps.auth import get_current_active_user
+from app.api.deps.auth import get_current_active_user, require_active_license
 from app.db.session import get_db
 from app.models import Device, License, User
 from app.schemas import (
@@ -23,11 +23,15 @@ def bind_device(
     payload: DeviceCreate,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin required")
+
     license_obj = (
         db.query(License)
-        .filter(License.id == payload.license_id, License.user_id == current_user.id)
+        .filter(License.id == payload.license_id)
         .first()
     )
     if not license_obj:
@@ -45,14 +49,10 @@ def bind_device(
             status_code=400, detail="Max devices reached for this license"
         )
 
-    existing = db.query(Device).filter(Device.device_id == payload.device_id).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Device already bound")
-
     device = Device(
         device_id=payload.device_id,
         device_name=payload.device_name,
-        user_id=current_user.id,
+        user_id=license_obj.user_id,
         license_id=license_obj.id,
         is_active=True,
     )
@@ -75,11 +75,15 @@ def unbind_device(
     payload: DeviceUnbind,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ):
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin required")
+
     device = (
         db.query(Device)
-        .filter(Device.id == payload.id, Device.user_id == current_user.id)
+        .filter(Device.id == payload.id)
         .first()
     )
     if not device:
@@ -104,9 +108,10 @@ def unbind_device(
 @router.post("/heartbeat", response_model=DeviceResponse)
 def heartbeat_device(
     payload: DeviceHeartbeat,
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_active_license),
     db: Session = Depends(get_db),
-    request: Request | None = None,
+    *,
+    request: Request,
 ):
     device = (
         db.query(Device)
@@ -116,7 +121,7 @@ def heartbeat_device(
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
 
-    device.last_seen = datetime.utcnow()
+    device.last_seen = datetime.now(timezone.utc)
     db.commit()
     db.refresh(device)
     audit_event(
@@ -135,9 +140,7 @@ def list_devices(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ) -> List[Device]:
-    return (
-        db.query(Device)
-        .filter(Device.user_id == current_user.id)
-        .order_by(Device.created_at.asc())
-        .all()
-    )
+    query = db.query(Device)
+    if not current_user.is_admin:
+        query = query.filter(Device.user_id == current_user.id)
+    return query.order_by(Device.created_at.asc()).all()

@@ -17,7 +17,8 @@ logger = logging.getLogger("webplayer.stream")
 def proxy_m3u8(
     url: str,
     current_user: User = Depends(require_active_license),
-    request: Request | None = None,
+    *,
+    request: Request,
 ) -> Response:
     if not url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="Only http/https URLs are allowed")
