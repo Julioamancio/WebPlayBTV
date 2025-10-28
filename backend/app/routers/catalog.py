@@ -73,7 +73,7 @@ def _get_epg_source() -> str:
 
 
 @router.get("/m3u", response_class=PlainTextResponse)
-async def get_m3u(force: bool = Query(default=False), request: Request):
+async def get_m3u(request: Request, force: bool = Query(default=False)):
     source = _get_source()
     try:
         text = await load_m3u_text(source, force=force)

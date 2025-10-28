@@ -22,6 +22,16 @@ Backend mínimo com FastAPI e rota de saúde (`/health`).
 4. Verifique:
    - Health: http://localhost:8000/health
 
+## Testes automatizados
+
+Para executar a suíte de testes (pytest):
+
+```powershell
+cd backend
+..\.venv\Scripts\python -m pip install pytest
+..\.venv\Scripts\python -m pytest -q
+```
+
 ## Autenticação (JWT) — Endpoints
 
 - Login:
@@ -88,6 +98,10 @@ Invoke-RestMethod -Uri http://localhost:8000/metrics -Method Get | Select-Object
   - Padrão: `sample.xml` (arquivo de exemplo incluso)
 - Endpoints:
   - `GET /catalog/epg` — retorna canais e a grade completa normalizada
+    - Query opcionais (globais):
+      - `start`, `end` (ambos ISO8601). Se o timezone for omitido, assume UTC.
+      - `limit_per_channel` (inteiro ≥ 1) e `offset_per_channel` (inteiro ≥ 0) para paginação por canal.
+    - O filtro retorna programas que tenham sobreposição com o intervalo informado. Em seguida, é aplicada a paginação por canal (`offset_per_channel` primeiro, depois `limit_per_channel`).
   - `GET /catalog/epg/{channel_id}` — retorna dados do canal e sua programação
     - Query opcionais:
       - `start`, `end` (ambos ISO8601). Se o timezone for omitido, assume UTC.
@@ -101,6 +115,10 @@ Como testar (PowerShell):
 # EPG local (padrão usa backend/sample.xml)
 Invoke-RestMethod -Uri http://localhost:8000/catalog/epg -Method Get | ConvertTo-Json -Depth 4 | Out-Host
 Invoke-RestMethod -Uri http://localhost:8000/catalog/epg/jctv -Method Get | ConvertTo-Json -Depth 4 | Out-Host
+
+# Filtro temporal global + paginação por canal
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/epg?start=2025-01-01T08:00:00Z&end=2025-01-01T09:00:00Z&limit_per_channel=1&offset_per_channel=0" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/epg?start=2025-01-01T08:00:00Z&end=2025-01-01T09:00:00Z&limit_per_channel=1&offset_per_channel=1" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
 
 # Filtro temporal por canal (intervalo)
 Invoke-RestMethod -Uri "http://localhost:8000/catalog/epg/jctv?start=2025-01-01T08:30:00Z&end=2025-01-01T10:00:00Z" -Method Get | ConvertTo-Json -Depth 6 | Out-Host

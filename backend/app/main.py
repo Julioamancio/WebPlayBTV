@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from app.db import create_db_and_tables
 from app.observability import metrics_middleware
 from app.routers.auth import router as auth_router
@@ -7,7 +8,14 @@ from app.routers.catalog import router as catalog_router
 from app.routers.metrics import router as metrics_router
 from app.routers.epg import router as epg_router
 
-app = FastAPI(title="WebPlay Backend", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    create_db_and_tables()
+    yield
+    # Shutdown (opcional)
+
+app = FastAPI(title="WebPlay Backend", version="0.1.0", lifespan=lifespan)
 
 
 @app.get("/health")
@@ -20,10 +28,7 @@ app.include_router(catalog_router)
 app.include_router(metrics_router)
 app.include_router(epg_router)
 
-
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
+## Removido on_event(deprecated); usando Lifespan acima
 
 
 @app.middleware("http")
@@ -35,4 +40,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
-
