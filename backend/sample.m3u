@@ -1,0 +1,5 @@
+#EXTM3U
+#EXTINF:-1 tvg-id="JCTV" tvg-name="JCTV" group-title="News" tvg-logo="https://example.com/logo1.png", JCTV Channel
+http://stream.example.com/jctv.m3u8
+#EXTINF:-1 tvg-id="SportsPlus" tvg-name="Sports Plus" group-title="Sports" tvg-logo="https://example.com/logo2.png", Sports Plus
+http://stream.example.com/sportsplus.m3u8

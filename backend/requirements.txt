@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+PyJWT
+sqlmodel
+httpx
+prometheus-client
+xmltodict

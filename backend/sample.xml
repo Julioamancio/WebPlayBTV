@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tv generator-info-name="webplay-sample">
+  <channel id="jctv">
+    <display-name>JCTV Channel</display-name>
+    <icon src="https://example.com/jctv.png"/>
+  </channel>
+  <channel id="sportsplus">
+    <display-name>Sports Plus</display-name>
+    <icon src="https://example.com/sportsplus.png"/>
+  </channel>
+
+  <programme start="20250101080000 +0000" stop="20250101090000 +0000" channel="jctv">
+    <title>Morning News</title>
+    <desc>Daily headlines and weather.</desc>
+  </programme>
+  <programme start="20250101090000 +0000" stop="20250101100000 +0000" channel="jctv">
+    <title>Talk Show</title>
+    <desc>Interviews and entertainment.</desc>
+  </programme>
+
+  <programme start="20250101080000 +0000" stop="20250101093000 +0000" channel="sportsplus">
+    <title>Top Matches</title>
+    <desc>Highlights from last night.</desc>
+  </programme>
+  <programme start="20250101093000 +0000" stop="20250101110000 +0000" channel="sportsplus">
+    <title>Live Game</title>
+    <desc>Championship series game.</desc>
+  </programme>
+</tv>
+

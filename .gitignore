@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# Virtualenvs
+.venv/
+backend/.venv/
+
+# IDE/Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Env/Secrets
+.env
+.env.*
+
+# Builds/Dist
+dist/
+build/
+
+# DB/Artifacts
+*.db
+backend/webplay.db
+webplay.db
