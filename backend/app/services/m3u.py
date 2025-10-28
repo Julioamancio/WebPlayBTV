@@ -1,12 +1,17 @@
 import os
 import re
+import time
+import asyncio
 from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
+from app.config import M3U_TTL_SECONDS, M3U_FETCH_RETRIES, FETCH_BACKOFF_SECONDS
 
 
 _cache_text: Optional[str] = None
 _cache_source: Optional[str] = None
+_cache_ts: float = 0.0
+_M3U_TTL_SECONDS = float(M3U_TTL_SECONDS)
 
 
 def _parse_extinf(line: str) -> Tuple[Dict[str, str], str]:
@@ -48,15 +53,33 @@ def parse_m3u(text: str) -> List[Dict[str, Any]]:
 
 
 async def load_m3u_text(source: str, force: bool = False) -> str:
-    global _cache_text, _cache_source
-    if not force and _cache_text is not None and source == _cache_source:
+    global _cache_text, _cache_source, _cache_ts
+    now = time.time()
+    if (
+        not force
+        and _cache_text is not None
+        and source == _cache_source
+        and (now - _cache_ts) < _M3U_TTL_SECONDS
+    ):
         return _cache_text
 
     if source.startswith("http://") or source.startswith("https://"):
-        async with httpx.AsyncClient(timeout=20) as client:
-            resp = await client.get(source)
-            resp.raise_for_status()
-            text = resp.text
+        attempts = max(1, int(M3U_FETCH_RETRIES))
+        backoff = float(FETCH_BACKOFF_SECONDS)
+        last_err: Optional[Exception] = None
+        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+            for i in range(attempts):
+                try:
+                    resp = await client.get(source)
+                    resp.raise_for_status()
+                    text = resp.text
+                    break
+                except Exception as e:
+                    last_err = e
+                    if i < attempts - 1:
+                        await asyncio.sleep(backoff * (2 ** i))
+                    else:
+                        raise last_err
     else:
         # Caminho relativo à pasta backend
         rel_path = source
@@ -68,4 +91,5 @@ async def load_m3u_text(source: str, force: bool = False) -> str:
 
     _cache_text = text
     _cache_source = source
+    _cache_ts = now
     return text

@@ -23,14 +23,28 @@ async def get_enriched_channels(m3u_source: str, epg_source: str, force: bool = 
 
     epg = await get_epg(epg_source)
     epg_channels_raw: Dict[str, Dict[str, Any]] = epg.get("channels", {})
-    # Mapear por id case-insensitive
-    epg_channels = {k.lower(): v for k, v in epg_channels_raw.items()}
+    # Helpers de normalização
+    def _norm(s: Optional[str]) -> Optional[str]:
+        return s.strip().lower() if isinstance(s, str) else None
+
+    # Mapear por id case-insensitive e por nome normalizado (fallback)
+    epg_by_id = {k.lower(): v for k, v in epg_channels_raw.items()}
+    epg_by_name: Dict[str, Dict[str, Any]] = {}
+    for cid, info in epg_channels_raw.items():
+        nm = _norm(info.get("name"))
+        if nm:
+            epg_by_name[nm] = info
 
     enriched: List[Dict[str, Any]] = []
     for ch in channels:
         tvg_id = ch.get("tvg_id")
         key = tvg_id.lower() if isinstance(tvg_id, str) else None
-        epg_info = epg_channels.get(key) if key else None
+        epg_info = epg_by_id.get(key) if key else None
+        if not epg_info:
+            # Fallback por nome quando tvg-id estiver ausente ou não casar
+            name_norm = _norm(ch.get("name"))
+            if name_norm:
+                epg_info = epg_by_name.get(name_norm)
         item = {
             **ch,
             "epg": epg_info,  # pode ser None

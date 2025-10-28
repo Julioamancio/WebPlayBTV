@@ -1,7 +1,10 @@
 import os
 from typing import Optional, List, Dict, Any
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
+from fastapi.responses import JSONResponse
+import json
+import hashlib
 from datetime import datetime, timezone
 
 from app.services.epg import get_channel_epg, get_epg
@@ -15,11 +18,16 @@ def _epg_source() -> str:
 
 
 @router.get("/epg")
-async def epg_catalog():
+async def epg_catalog(request: Request):
     source = _epg_source()
     try:
         data = await get_epg(source)
-        return data
+        payload = json.dumps(data, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        etag = hashlib.sha256(payload).hexdigest()
+        inm = request.headers.get("if-none-match")
+        if inm == etag:
+            return Response(status_code=304)
+        return JSONResponse(content=data, headers={"ETag": etag})
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=f"Arquivo EPG não encontrado: {e}")
 
@@ -39,6 +47,8 @@ async def epg_channel(
     channel_id: str,
     start: Optional[datetime] = Query(default=None, description="ISO8601; assume UTC se sem timezone"),
     end: Optional[datetime] = Query(default=None, description="ISO8601; assume UTC se sem timezone"),
+    limit: Optional[int] = Query(default=None, ge=1, description="Limite de programas retornados"),
+    offset: int = Query(default=0, ge=0, description="Deslocamento inicial para paginação"),
 ):
     source = _epg_source()
     try:
@@ -69,6 +79,11 @@ async def epg_channel(
                 continue
             filtered.append(p)
 
-        return {**data, "programs": filtered}
+        # Aplicar paginação
+        start_idx = offset if offset >= 0 else 0
+        end_idx = start_idx + limit if (limit is not None) else None
+        paginated = filtered[start_idx:end_idx]
+
+        return {**data, "programs": paginated}
     except FileNotFoundError as e:
         raise HTTPException(status_code=404, detail=f"Arquivo EPG não encontrado: {e}")

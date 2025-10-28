@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 import xmltodict
+from app.config import EPG_TTL_SECONDS, EPG_FETCH_RETRIES, FETCH_BACKOFF_SECONDS
 
 
 @dataclass
@@ -16,7 +17,7 @@ class EPGCache:
 
 
 _CACHE = EPGCache()
-_TTL_SECONDS = 300.0
+_TTL_SECONDS = float(EPG_TTL_SECONDS)
 
 
 def _backend_base_dir() -> Path:
@@ -43,10 +44,21 @@ def _parse_xmltv_time(value: str) -> Optional[str]:
 
 
 async def _fetch_remote(url: str) -> str:
+    attempts = max(1, int(EPG_FETCH_RETRIES))
+    backoff = float(FETCH_BACKOFF_SECONDS)
+    last_err: Optional[Exception] = None
     async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
-        resp = await client.get(url)
-        resp.raise_for_status()
-        return resp.text
+        for i in range(attempts):
+            try:
+                resp = await client.get(url)
+                resp.raise_for_status()
+                return resp.text
+            except Exception as e:
+                last_err = e
+                if i < attempts - 1:
+                    await asyncio.sleep(backoff * (2 ** i))
+                else:
+                    raise last_err
 
 
 def _read_local(path_like: str) -> str:
@@ -159,4 +171,3 @@ async def get_channel_epg(source: str, channel_id: str) -> Dict[str, Any]:
     if not channel:
         return {"channel": None, "programs": []}
     return {"channel": channel, "programs": epg["programs"].get(channel_id, [])}
-

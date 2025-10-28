@@ -89,9 +89,12 @@ Invoke-RestMethod -Uri http://localhost:8000/metrics -Method Get | Select-Object
 - Endpoints:
   - `GET /catalog/epg` — retorna canais e a grade completa normalizada
   - `GET /catalog/epg/{channel_id}` — retorna dados do canal e sua programação
-    - Query opcionais: `start`, `end` (ambos ISO8601). Se o timezone for omitido, assume UTC.
-    - O filtro retorna programas que tenham sobreposição com o intervalo informado. Se apenas `start` for informado, retorna do instante em diante. Se apenas `end` for informado, retorna até o instante.
-- Cache: o XMLTV é armazenado em cache por 5 minutos para reduzir I/O e latência
+    - Query opcionais:
+      - `start`, `end` (ambos ISO8601). Se o timezone for omitido, assume UTC.
+      - `limit` (inteiro ≥ 1) e `offset` (inteiro ≥ 0) para paginação dos resultados
+    - O filtro retorna programas que tenham sobreposição com o intervalo informado. Se apenas `start` for informado, retorna do instante em diante. Se apenas `end` for informado, retorna até o instante. Em seguida, é aplicada a paginação (`offset` primeiro, depois `limit`).
+- Cache: o XMLTV é armazenado em cache para reduzir I/O e latência
+  - TTL configurável via `EPG_TTL_SECONDS` (padrão: `300` segundos)
 
 Como testar (PowerShell):
 ```powershell
@@ -107,6 +110,10 @@ Invoke-RestMethod -Uri "http://localhost:8000/catalog/epg/jctv?start=2025-01-01T
 
 # Apenas até um instante
 Invoke-RestMethod -Uri "http://localhost:8000/catalog/epg/jctv?end=2025-01-01T08:59:00Z" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
+
+# Paginação: retornar apenas 1 item por vez
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/epg/jctv?start=2025-01-01T08:00:00Z&end=2025-01-01T11:00:00Z&limit=1&offset=0" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/epg/jctv?start=2025-01-01T08:00:00Z&end=2025-01-01T11:00:00Z&limit=1&offset=1" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
 
 # Usar um EPG remoto (exemplo)
 $env:EPG_SOURCE = 'https://example.com/epg.xml'
@@ -134,11 +141,31 @@ Formato de resposta resumido:
   - `GET /catalog/m3u` — retorna o conteúdo bruto do M3U
   - `GET /catalog/channels` — lista os canais parseados do M3U
   - `GET /catalog/channels/enriched` — canais do M3U enriquecidos com metadados do EPG
+    - Query opcionais: `include_now=true|false`, `time` (ISO8601; assume UTC se omitido)
+    - Quando `include_now=true`, o payload inclui `current` e `next` por canal, calculados com base no EPG e no instante informado (ou no horário atual se `time` não for fornecido).
   - `GET /catalog/now` — para cada canal, programa atual e próximo (se houver)
     - Query opcional: `time` (ISO8601). Se o timezone for omitido, assume UTC.
+  - `GET /catalog/next` — para cada canal, apenas o próximo programa (se houver)
+    - Query opcional: `time` (ISO8601). Se o timezone for omitido, assume UTC.
+
+- Cache do M3U:
+  - TTL configurável via `M3U_TTL_SECONDS` (padrão: `300` segundos)
+  - Para forçar recarregamento, utilize `force=true` em `GET /catalog/m3u` ou `GET /catalog/channels`
+
+Exemplos (PowerShell):
+```powershell
+# Forçar atualização do M3U ignorando cache
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/m3u?force=true" -Method Get | Select-Object -First 5
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/channels?force=true" -Method Get | ConvertTo-Json -Depth 3 | Out-Host
+
+# Ajustar TTLs via ambiente (.env ou variável de sessão)
+$env:EPG_TTL_SECONDS = '120'
+$env:M3U_TTL_SECONDS = '60'
+```
 
 Observações:
 - A associação M3U ↔ EPG é feita por `tvg-id` (M3U) e `channel.id` (XMLTV) com comparação case-insensitive (por exemplo, `JCTV` ↔ `jctv`).
+- Fallback: quando `tvg-id` estiver ausente ou não casar, usamos o nome do canal (`name`) normalizado (lowercase/trim) para tentar encontrar o EPG correspondente.
 - O endpoint `/catalog/now` usa o horário atual do servidor; se a grade do XMLTV estiver fora da faixa atual, `current` e/ou `next` podem ser `null`.
 
 Como testar (PowerShell):
@@ -154,4 +181,10 @@ Invoke-RestMethod -Uri http://localhost:8000/catalog/now -Method Get | ConvertTo
 
 # Consultar a programação considerando um instante específico (útil para samples estáticos)
 Invoke-RestMethod -Uri "http://localhost:8000/catalog/now?time=2025-01-01T08:30:00Z" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
+
+# Canais enriquecidos incluindo current/next (útil para reduzir round-trips)
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/channels/enriched?include_now=true&time=2025-01-01T08:30:00Z" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
+
+# Somente o próximo programa por canal
+Invoke-RestMethod -Uri "http://localhost:8000/catalog/next?time=2025-01-01T08:30:00Z" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
 ```
