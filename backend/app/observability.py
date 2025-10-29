@@ -36,6 +36,13 @@ CAPACITY_LIMIT_REACHED_TOTAL = Counter(
     labelnames=["context"],
 )
 
+# Rate limit blocks
+RATE_LIMIT_BLOCKED_TOTAL = Counter(
+    "rate_limit_blocked_total",
+    "Times a request was blocked by rate limiting",
+    labelnames=["path"],
+)
+
 
 async def metrics_middleware(request: Request, call_next: Callable[[Request], Response]):
     start = time.perf_counter()

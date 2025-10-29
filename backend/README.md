@@ -47,7 +47,25 @@ cd backend
   $body = '{"username":"admin@example.com","password":"admin123"}'
   Invoke-RestMethod -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body $body
   ```
-  Resposta: `{ "access_token": "...", "token_type": "bearer" }`
+  Resposta: `{ "access_token": "...", "token_type": "bearer", "refresh_token": "..." }`
+
+### Auditoria de Autenticação
+
+- Os endpoints de autenticação geram eventos de auditoria (`AuditLog`) com correlação via `X-Request-ID`:
+  - `auth.login` — criado em login bem-sucedido.
+  - `auth.refresh` — criado ao rotacionar o refresh token (single-use); inclui `jti` do token usado.
+  - `auth.revoke` — criado ao revogar explicitamente um refresh token; inclui `jti`.
+  - `auth.register` — criado ao registrar novo usuário.
+
+- O campo `details` contém informações úteis para diagnóstico, incluindo `request_id` enviado/gerado pelo middleware.
+
+- Consultando seus eventos:
+  ```powershell
+  $token = (Invoke-RestMethod -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body '{"username":"admin@example.com","password":"admin123"}').access_token
+  Invoke-RestMethod -Uri http://localhost:8000/audit/me -Headers @{ Authorization = "Bearer $token" }
+  ```
+
+- Exemplo de `details`: `status=success request_id=rid-abc-123` ou `rotated=true jti=<uuid> request_id=rid-xyz-456`.
 
 - Login agora retorna também um resumo de capacidade:
   ```powershell
@@ -67,6 +85,67 @@ cd backend
   - `devices_count`: dispositivos já registrados pelo usuário
   - `devices_remaining`: quanto ainda pode registrar
   - `limit_enabled`: se regras de limite estão ativas
+
+  Atualização: login também retorna `refresh_token`. Use-o para obter um novo `access_token` quando expirar.
+
+- Renovar token de acesso com refresh token:
+  ```powershell
+  $login = Invoke-RestMethod -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body '{"username":"admin@example.com","password":"admin123"}'
+  $refresh = $login.refresh_token
+  # Realiza refresh: retorna novo access_token e novo refresh_token
+  Invoke-RestMethod -Uri http://localhost:8000/auth/refresh -Method Post -ContentType 'application/json' -Body (ConvertTo-Json @{ refresh_token = $refresh })
+  ```
+  Resposta: `{ "access_token": "...", "token_type": "bearer", "refresh_token": "..." }`
+  
+  Configuração:
+  - `ACCESS_TOKEN_EXPIRE_MINUTES` — minutos de expiração do JWT de acesso (padrão: 60)
+  - `REFRESH_TOKEN_EXPIRE_DAYS` — dias de expiração do refresh token (padrão: 14)
+
+  Rotação e uso único:
+  - Ao chamar `POST /auth/refresh`, o refresh token usado é automaticamente revogado (blacklist por `jti`) e um novo `refresh_token` é emitido.
+  - Qualquer tentativa de reutilizar o refresh token antigo resultará em `401`.
+
+### Correlação de requisições (X-Request-ID)
+
+- Todas as respostas incluem o cabeçalho `X-Request-ID`.
+- Se o cliente enviar `X-Request-ID` na requisição, ele será preservado; caso contrário, um UUID v4 será gerado.
+- Utilize esse ID para correlacionar chamadas em logs e troubleshooting.
+
+### Logging estruturado
+
+- O backend emite logs de requisição como linhas JSON com os campos:
+  - `method`, `path`, `status`, `duration_ms`, `client_ip`, `request_id`
+- Os logs são enviados pelo logger `webplay.request`, facilitando filtragem e análise.
+- Combine com `X-Request-ID` para rastrear fluxos entre serviços e identificar problemas rapidamente.
+
+- Revogar refresh token (blacklist):
+  ```powershell
+  $login = Invoke-RestMethod -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body '{"username":"admin@example.com","password":"admin123"}'
+  $refresh = $login.refresh_token
+  Invoke-RestMethod -Uri http://localhost:8000/auth/revoke -Method Post -ContentType 'application/json' -Body (ConvertTo-Json @{ refresh_token = $refresh })
+  ```
+  Após a revogação, `POST /auth/refresh` com o mesmo token retornará `401`.
+
+Notas de segurança:
+- Os refresh tokens incluem um `jti` único e são validados contra uma blacklist na tabela `RevokedToken`.
+- Em caso de comprometimento, revogue o token imediatamente e peça novo login ao usuário.
+
+### Rate limiting (opcional)
+
+- Proteções de abuso para rotas críticas:
+  - `/auth/login` — limite por janela
+  - `/auth/refresh` — limite por janela
+  - `/devices/register` — limite por janela
+
+- Variáveis de ambiente:
+  - `RATE_LIMIT_ENABLED` — habilita o middleware (padrão: `false`)
+  - `RATE_LIMIT_WINDOW_SECONDS` — tamanho da janela (padrão: `60`)
+  - `RATE_LIMIT_LOGIN_PER_WINDOW` — máximo de requisições de login por IP/rota dentro da janela (padrão: `30`)
+  - `RATE_LIMIT_REFRESH_PER_WINDOW` — máximo de requisições de refresh por IP/rota dentro da janela (padrão: `60`)
+  - `RATE_LIMIT_DEVICES_REGISTER_PER_WINDOW` — máximo de registros de dispositivos por IP/rota dentro da janela (padrão: `30`)
+
+- Métrica Prometheus:
+  - `rate_limit_blocked_total{path}` — contador de requisições bloqueadas por rate limiting
 
 - Capacidade do usuário atual via endpoint dedicado:
   ```powershell
@@ -195,6 +274,23 @@ Notas:
   - Para testar localmente (servidor em execução):
     - Abra `http://localhost:8000/ui/capacity` no browser
     - Use `admin@example.com` / `admin123` e explore os dados
+
+## UI de Diagnóstico (sem dependências externas)
+
+- Páginas HTML servidas pelo backend em `/ui/*` para uso rápido sem Node.js ou cadastro externo:
+  - `GET /ui/catalog` — catálogo enriquecido com EPG; filtro por nome/grupo e link para stream.
+  - `GET /ui/devices` — login, listagem de dispositivos do usuário e registro de novos.
+  - `GET /ui/audit` — login e listagem dos eventos de auditoria (`auth.login`, `auth.refresh`, `auth.revoke`, `auth.register`).
+
+- Como acessar localmente (servidor iniciado):
+  - `http://localhost:8000/ui/catalog`
+  - `http://localhost:8000/ui/devices`
+  - `http://localhost:8000/ui/audit`
+
+- Observações:
+  - Envie usuário/senha no formulário das páginas para autenticar.
+  - As respostas incluem `X-Request-ID` para correlação com logs e auditoria.
+  - Usuário demo disponível em dev: `admin@example.com` / `admin123`.
 
 - Resumo de licenças (agregado):
   ```powershell
@@ -382,3 +478,46 @@ docker run -p 8000:8000 --env SECRET_KEY="dev" --env M3U_SOURCE=sample.m3u --env
   - `startCommand`: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
   - Defina `SECRET_KEY` e ajuste fontes `M3U_SOURCE`/`EPG_SOURCE` conforme o ambiente
 ```
+# Backend WebPlay BTV
+
+## Stripe (Billing)
+
+Este backend possui rotas opcionais para cobrança via Stripe:
+
+- `POST /billing/checkout` — cria uma sessão de checkout (modo assinatura). Requer autenticação e os campos:
+  - `price_id`: ID do preço no Stripe (ex.: `price_...`).
+  - `success_url`: URL de sucesso para redirecionamento.
+  - `cancel_url`: URL de cancelamento.
+
+- `POST /billing/webhook` — endpoint para webhooks do Stripe. Processa o evento `checkout.session.completed` e cria/atualiza uma licença ativa para o usuário definido em `client_reference_id`.
+  - Suporta também `customer.subscription.updated` (atualiza `status` e `plan`) e `customer.subscription.deleted` (inativa a licença vinculada via `external_id`).
+
+- `POST /billing/portal` — cria uma sessão do Billing Portal para o usuário autenticado.
+  - Body: `{ "return_url": "https://example.com/account" }`
+  - Pré-requisito: o usuário deve ter `stripe_customer_id` salvo (preenchido no webhook de checkout).
+  - Resposta: `{ "url": "https://billing.stripe.com/session/..." }`
+
+- `GET /billing/subscription/me` — lista as assinaturas do Stripe do usuário autenticado.
+  - Pré-requisito: `stripe_customer_id` associado ao usuário.
+  - Resposta: lista de objetos `{ id, status, plan }`.
+
+### Configuração
+
+Defina as variáveis de ambiente:
+
+- `STRIPE_SECRET_KEY` — chave secreta de API do Stripe.
+- `STRIPE_WEBHOOK_SECRET` — segredo do endpoint de webhook no Stripe.
+
+Campos adicionais:
+- `UserAccount.stripe_customer_id` — ID do cliente no Stripe, usado para gerar sessão do Billing Portal.
+- `License.external_id` — ID externo da assinatura (ex.: `subscription.id`), usado para correlacionar e atualizar status/plano.
+
+Opcionalmente, ajuste `DEVICES_PER_LICENSE` e `LICENSE_PLAN_DEVICE_LIMITS` em `app/config.py` para controlar limites por plano. O campo `plan` da licença é preenchido com o `price.id` (ou `nickname/product`) retornado pela assinatura.
+
+Observações:
+
+- Para associar a assinatura ao usuário, o checkout usa `client_reference_id` com `username` atual.
+- O webhook atual foca em `checkout.session.completed`. Suporte a `subscription.updated/deleted` pode ser adicionado conforme a necessidade (ex.: para pausar/cancelar assinaturas).
+- Em produção, configure o webhook do Stripe para apontar para `/billing/webhook` e use o segredo correto.
+usuario: admin@example.com
+senha: admin123

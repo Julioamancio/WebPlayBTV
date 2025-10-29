@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.db import create_db_and_tables
 from app.observability import metrics_middleware
+from app.services.rate_limit import rate_limit_middleware
+from app.services.request_id import request_id_middleware
+from app.services.request_logging import request_logging_middleware
 from app.config import CORS_ALLOW_ORIGINS
 from app.routers.auth import router as auth_router
 from app.routers.devices import router as devices_router
@@ -12,6 +15,7 @@ from app.routers.epg import router as epg_router
 from app.routers.licenses import router as licenses_router
 from app.routers.audit import router as audit_router
 from app.routers.ui import router as ui_router
+from app.routers.billing import router as billing_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,13 +39,28 @@ app.include_router(epg_router)
 app.include_router(licenses_router)
 app.include_router(audit_router)
 app.include_router(ui_router)
+app.include_router(billing_router)
 
 ## Removido on_event(deprecated); usando Lifespan acima
 
 
 @app.middleware("http")
+async def _rate_limit_middleware(request, call_next):
+    return await rate_limit_middleware(request, call_next)
+
+@app.middleware("http")
 async def _metrics_middleware(request, call_next):
     return await metrics_middleware(request, call_next)
+
+@app.middleware("http")
+async def _request_id_middleware(request, call_next):
+    # Registrar primeiro para estar disponível em métricas e logs
+    return await request_id_middleware(request, call_next)
+
+@app.middleware("http")
+async def _request_logging_middleware(request, call_next):
+    # Logging estruturado com correlação via X-Request-ID
+    return await request_logging_middleware(request, call_next)
 
 # CORS
 origins_cfg = CORS_ALLOW_ORIGINS

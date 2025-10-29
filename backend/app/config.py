@@ -7,6 +7,8 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+# Refresh tokens: expiração em dias (padrão: 14)
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "14"))
 
 # TTLs de cache (segundos)
 EPG_TTL_SECONDS = float(os.getenv("EPG_TTL_SECONDS", "300"))
@@ -35,3 +37,14 @@ LICENSE_PLAN_DEVICE_LIMITS = {
     # "silver": 2,
     # "gold": 5,
 }
+
+# Stripe (opcional)
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+# Rate limiting (opcional)
+RATE_LIMIT_ENABLED = os.getenv("RATE_LIMIT_ENABLED", "false").lower() in ("1", "true", "yes")
+RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
+RATE_LIMIT_LOGIN_PER_WINDOW = int(os.getenv("RATE_LIMIT_LOGIN_PER_WINDOW", "30"))
+RATE_LIMIT_REFRESH_PER_WINDOW = int(os.getenv("RATE_LIMIT_REFRESH_PER_WINDOW", "60"))
+RATE_LIMIT_DEVICES_REGISTER_PER_WINDOW = int(os.getenv("RATE_LIMIT_DEVICES_REGISTER_PER_WINDOW", "30"))

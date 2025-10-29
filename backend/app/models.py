@@ -25,6 +25,8 @@ class License(SQLModel, table=True):
     # Plano opcional da licença (ex.: bronze/silver/gold); quando presente,
     # pode definir limites específicos por plano.
     plan: Optional[str] = Field(default=None, index=True)
+    # ID externo da licença/assinatura (ex.: subscription.id do Stripe)
+    external_id: Optional[str] = Field(default=None, index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
