@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: webplay-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHONPATH
+        value: backend
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        value: sqlite:///webplay.db
+      - key: M3U_SOURCE
+        value: sample.m3u
+      - key: EPG_SOURCE
+        value: sample.xml
+      - key: EPG_TTL_SECONDS
+        value: "300"
+      - key: M3U_TTL_SECONDS
+        value: "300"
+      - key: FETCH_BACKOFF_SECONDS
+        value: "0.5"
+      - key: CORS_ALLOW_ORIGINS
+        value: "*"

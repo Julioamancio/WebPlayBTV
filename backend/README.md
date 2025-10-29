@@ -22,6 +22,14 @@ Backend mínimo com FastAPI e rota de saúde (`/health`).
 4. Verifique:
    - Health: http://localhost:8000/health
 
+5. Variáveis de ambiente úteis (via `.env` ou sessão):
+   - `SECRET_KEY` — chave JWT
+   - `DATABASE_URL` — ex.: `sqlite:///webplay.db` (padrão)
+   - `M3U_SOURCE` — ex.: `sample.m3u` ou URL
+   - `EPG_SOURCE` — ex.: `sample.xml` ou URL
+   - `EPG_TTL_SECONDS`, `M3U_TTL_SECONDS`, `FETCH_BACKOFF_SECONDS`
+   - `CORS_ALLOW_ORIGINS` — lista separada por vírgula ou `*`
+
 ## Testes automatizados
 
 Para executar a suíte de testes (pytest):
@@ -41,9 +49,37 @@ cd backend
   ```
   Resposta: `{ "access_token": "...", "token_type": "bearer" }`
 
+- Login agora retorna também um resumo de capacidade:
+  ```powershell
+  $login = Invoke-RestMethod -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body '{"username":"admin@example.com","password":"admin123"}'
+  $token = $login.access_token
+  $login.capacity | ConvertTo-Json
+  ```
+  O login também inclui o header `X-Capacity-Remaining` com o valor atual:
+  ```powershell
+  $resp = Invoke-WebRequest -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body '{"username":"admin@example.com","password":"admin123"}'
+  $resp.Headers["X-Capacity-Remaining"]
+  ```
+  Campos em `capacity`:
+  - `active_licenses`: quantidade de licenças ativas do usuário
+  - `devices_per_license`: valor configurado em `DEVICES_PER_LICENSE`
+  - `devices_allowed`: total de dispositivos permitidos considerando licenças/plano
+  - `devices_count`: dispositivos já registrados pelo usuário
+  - `devices_remaining`: quanto ainda pode registrar
+  - `limit_enabled`: se regras de limite estão ativas
+
+- Capacidade do usuário atual via endpoint dedicado:
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/auth/capacity -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+  Retorna os mesmos campos de `capacity` acima, calculados com base em suas licenças ativas e dispositivos.
+  O endpoint também inclui o header `X-Capacity-Remaining` com o valor restante atual:
+  ```powershell
+  (Invoke-WebRequest -Uri http://localhost:8000/auth/capacity -Headers @{ Authorization = "Bearer $token" }).Headers["X-Capacity-Remaining"]
+  ```
+
 - Perfil atual (`/auth/me`), usando o token obtido no login:
   ```powershell
-  $token = (Invoke-RestMethod -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body '{"username":"admin@example.com","password":"admin123"}').access_token
   Invoke-RestMethod -Uri http://localhost:8000/auth/me -Headers @{ Authorization = "Bearer $token" }
   ```
 
@@ -52,8 +88,16 @@ cd backend
   Invoke-RestMethod -Uri http://localhost:8000/auth/logout -Method Post
   ```
 
+- Registro de usuário:
+  ```powershell
+  $body = '{"username":"novo@example.com","password":"seguro123","full_name":"Novo Usuário"}'
+  Invoke-RestMethod -Uri http://localhost:8000/auth/register -Method Post -ContentType 'application/json' -Body $body
+  ```
+  Após registrar, realize o login normalmente com o novo usuário.
+
 Notas:
-- Este fluxo usa base de usuários fake em memória e não deve ser usado em produção.
+- O login prioriza usuários persistentes no banco (`UserAccount`); se não encontrar, faz fallback para `FAKE_USERS` em memória (apenas dev/demo).
+- Senhas no banco são armazenadas com hash `bcrypt` via `passlib`; nunca salvamos senhas em texto plano.
 - Configure um `SECRET_KEY` via `.env` para tokens mais seguros.
 
 ## Dispositivos (SQLModel)
@@ -65,15 +109,92 @@ Notas:
   $body = '{"fingerprint":"device-abc-123","name":"Meu PC","platform":"Windows 11"}'
   Invoke-RestMethod -Uri http://localhost:8000/devices/register -Method Post -ContentType 'application/json' -Body $body -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
   ```
+  O registro responde também com o header `X-Capacity-Remaining` indicando quanto ainda pode registrar.
+  Para ler headers, utilize `Invoke-WebRequest`:
+  ```powershell
+  $resp = Invoke-WebRequest -Uri http://localhost:8000/devices/register -Method Post -ContentType 'application/json' -Body $body -Headers @{ Authorization = "Bearer $token" }
+  $resp.Headers["X-Capacity-Remaining"]
+  ```
 
 - Listar seus dispositivos:
   ```powershell
   Invoke-RestMethod -Uri http://localhost:8000/devices/me -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
   ```
 
+- Remover um dispositivo seu:
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/devices/1 -Method Delete -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+
 Notas:
 - O registro é idempotente por `fingerprint` + usuário: se já existir, retorna o mesmo registro.
 - Modelos básicos em `app/models.py` (User, Device, License) — em breve conectaremos com usuários persistentes.
+- Limite opcional por licença: defina `DEVICES_PER_LICENSE` (ex.: `2`). Quando configurado, é necessário ter ao menos uma licença ativa e o número de dispositivos permitidos será `licenças_ativas * DEVICES_PER_LICENSE`.
+
+- Capacidade atual de dispositivos (limites e uso):
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/devices/capacity -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+  Campos: `active_licenses`, `devices_per_license`, `limit_enabled`, `devices_allowed`, `devices_count`, `devices_remaining`.
+  O endpoint também inclui o header `X-Capacity-Remaining` com o valor restante atual:
+  ```powershell
+  (Invoke-WebRequest -Uri http://localhost:8000/devices/capacity -Headers @{ Authorization = "Bearer $token" }).Headers["X-Capacity-Remaining"]
+  ```
+
+## Licenças (SQLModel)
+
+- Criar licença para o usuário atual:
+  ```powershell
+  $token = (Invoke-RestMethod -Uri http://localhost:8000/auth/login -Method Post -ContentType 'application/json' -Body '{"username":"admin@example.com","password":"admin123"}').access_token
+  Invoke-RestMethod -Uri http://localhost:8000/licenses/create -Method Post -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+
+- Listar suas licenças:
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/licenses/me -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+
+- Desativar uma licença:
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/licenses/1/deactivate -Method Post -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+
+- Definir/alterar plano da licença (usa `LICENSE_PLAN_DEVICE_LIMITS` quando configurado):
+  ```powershell
+  $body = '{"plan":"silver"}'
+  Invoke-RestMethod -Uri http://localhost:8000/licenses/1/set_plan -Method Post -ContentType 'application/json' -Headers @{ Authorization = "Bearer $token" } -Body $body | ConvertTo-Json
+  ```
+  - Para remover o plano e voltar ao padrão de `DEVICES_PER_LICENSE`, envie `{"plan":null}` ou `{ "plan": "" }`.
+
+- Listar planos disponíveis:
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/licenses/plans -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+
+Notas:
+- Licenças são associadas ao usuário autenticado (`owner_username`). O status inicial é `active` e pode ser alterado para `inactive`.
+- É possível limitar dispositivos por licença definindo `DEVICES_PER_LICENSE` no ambiente.
+  - Opcionalmente, defina limites por plano no arquivo `app/config.py` via `LICENSE_PLAN_DEVICE_LIMITS` (ex.: `{"bronze":1,"silver":2,"gold":5}`). Quando `DEVICES_PER_LICENSE > 0`, cada licença ativa somará o limite do seu plano se definido; caso contrário, usa o valor padrão de `DEVICES_PER_LICENSE`.
+
+- Regras da licença do usuário:
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/licenses/rules -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+  Retorna: `active_licenses`, `devices_per_license`, `devices_allowed`, `devices_count`, `limit_enabled`, `limit_reached`.
+  O endpoint também inclui o header `X-Capacity-Remaining` com o valor restante atual:
+  ```powershell
+  (Invoke-WebRequest -Uri http://localhost:8000/licenses/rules -Headers @{ Authorization = "Bearer $token" }).Headers["X-Capacity-Remaining"]
+  ```
+
+- Resumo de licenças (agregado):
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/licenses/summary -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+  Retorna: `active_licenses`, `inactive_licenses`, `by_plan_active` (dict), `devices_per_license`, `devices_allowed_total`, `devices_count`, `devices_remaining_total`, `limit_enabled`.
+  O endpoint também inclui o header `X-Capacity-Remaining` com o valor de `devices_remaining_total`:
+  ```powershell
+  (Invoke-WebRequest -Uri http://localhost:8000/licenses/summary -Headers @{ Authorization = "Bearer $token" }).Headers["X-Capacity-Remaining"]
+  ```
 
 ## Observabilidade e Métricas
 
@@ -82,6 +203,9 @@ Notas:
 - Middleware coleta automaticamente:
   - `http_requests_total{method, path, status}`
   - `http_request_duration_seconds{method, path, status}` com buckets padrões
+- Métricas de capacidade:
+  - `user_capacity_remaining{username, context}` — gauge com a capacidade restante por usuário e contexto (`auth_login`, `auth_capacity`, `devices_register`, `devices_capacity`, `licenses_rules`, `licenses_summary`).
+  - `capacity_limit_reached_total{context}` — contador incrementado quando o registro de dispositivo encontra limite (`devices_register`).
 - `X-Request-ID`:
   - Header incluído em todas as respostas; pode ser enviado no request para propagar o mesmo ID.
 
@@ -89,7 +213,30 @@ Como testar (PowerShell):
 ```powershell
 Invoke-RestMethod -Uri http://localhost:8000/health -Headers @{ 'X-Request-ID' = 'test-123' } -Method Get | ConvertTo-Json
 Invoke-RestMethod -Uri http://localhost:8000/metrics -Method Get | Select-Object -First 40
+ # Verificar métricas de capacidade
+ Invoke-RestMethod -Uri http://localhost:8000/auth/capacity -Headers @{ Authorization = "Bearer $token" } | Out-Null
+ (Invoke-RestMethod -Uri http://localhost:8000/metrics).Split("`n") | Where-Object { $_ -match 'user_capacity_remaining' }
 ```
+
+## Auditoria
+
+- Registrar ações de usuário: criação/desativação de licenças, definição de plano, registro e remoção de dispositivo.
+
+- Listar seus logs de auditoria:
+  ```powershell
+  Invoke-RestMethod -Uri http://localhost:8000/audit/me -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
+  Parâmetros:
+  - `limit` (opcional, padrão 50, máximo 200)
+  - `offset` (opcional, padrão 0)
+  - `actions` (opcional, repetível) — ex.: `?actions=license.create&actions=device.register`
+  - `resources` (opcional, repetível) — ex.: `?resources=license&resources=device`
+  - `from_time`, `to_time` (opcional, ISO8601; assume UTC se sem timezone)
+
+  Exemplo com filtros e paginação:
+  ```powershell
+  Invoke-RestMethod -Uri "http://localhost:8000/audit/me?actions=license.create&resources=license&limit=20&offset=0" -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json
+  ```
 
 ## Catálogo EPG (XMLTV)
 
@@ -205,4 +352,23 @@ Invoke-RestMethod -Uri "http://localhost:8000/catalog/channels/enriched?include_
 
 # Somente o próximo programa por canal
 Invoke-RestMethod -Uri "http://localhost:8000/catalog/next?time=2025-01-01T08:30:00Z" -Method Get | ConvertTo-Json -Depth 6 | Out-Host
+
+## Docker
+
+Build e run do backend:
+```powershell
+cd backend
+docker build -t webplay-backend .
+docker run -p 8000:8000 --env SECRET_KEY="dev" --env M3U_SOURCE=sample.m3u --env EPG_SOURCE=sample.xml webplay-backend
+```
+
+## Deploy no Render.com
+
+- Arquivo `render.yaml` na raiz já define o serviço web com `healthCheckPath: /health` e variáveis de ambiente.
+- Instruções resumidas:
+  - Conecte o repositório ao Render
+  - Escolha plano gratuito para testes
+  - `buildCommand`: `pip install -r backend/requirements.txt`
+  - `startCommand`: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+  - Defina `SECRET_KEY` e ajuste fontes `M3U_SOURCE`/`EPG_SOURCE` conforme o ambiente
 ```

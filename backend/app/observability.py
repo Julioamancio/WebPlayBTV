@@ -4,7 +4,7 @@ import uuid
 from typing import Callable
 
 from fastapi import Request, Response
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, Gauge
 
 
 logger = logging.getLogger("webplay")
@@ -21,6 +21,19 @@ HTTP_LATENCY = Histogram(
     "HTTP request latency in seconds",
     labelnames=["method", "path", "status"],
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10),
+)
+
+# Métricas de capacidade por usuário/contexto
+USER_CAPACITY_REMAINING = Gauge(
+    "user_capacity_remaining",
+    "Remaining device capacity by user and context",
+    labelnames=["username", "context"],
+)
+
+CAPACITY_LIMIT_REACHED_TOTAL = Counter(
+    "capacity_limit_reached_total",
+    "Times a user hit capacity limit",
+    labelnames=["context"],
 )
 
 

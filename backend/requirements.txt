@@ -5,3 +5,5 @@ sqlmodel
 httpx
 prometheus-client
 xmltodict
+python-dotenv
+passlib[bcrypt]
