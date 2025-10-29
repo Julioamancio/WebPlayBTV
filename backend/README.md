@@ -186,6 +186,16 @@ Notas:
   (Invoke-WebRequest -Uri http://localhost:8000/licenses/rules -Headers @{ Authorization = "Bearer $token" }).Headers["X-Capacity-Remaining"]
   ```
 
+- UI simples para visualizar capacidade e licenças:
+  - Página: `GET /ui/capacity`
+  - Possui formulário de login (usuário/senha) e exibe:
+    - Resumo `/licenses/summary` (inclui `X-Capacity-Remaining`)
+    - Capacidade `/auth/capacity`
+    - Avisos quando `devices_remaining_total` está em 0 ou ≤ 1
+  - Para testar localmente (servidor em execução):
+    - Abra `http://localhost:8000/ui/capacity` no browser
+    - Use `admin@example.com` / `admin123` e explore os dados
+
 - Resumo de licenças (agregado):
   ```powershell
   Invoke-RestMethod -Uri http://localhost:8000/licenses/summary -Headers @{ Authorization = "Bearer $token" } | ConvertTo-Json

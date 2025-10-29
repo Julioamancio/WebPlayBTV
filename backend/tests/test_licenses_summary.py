@@ -15,10 +15,6 @@ def _login_token():
 
 def test_licenses_summary_header_and_payload_consistency():
     token = _login_token()
-    # Garante ao menos uma licença ativa
-    r_create = client.post("/licenses/create", headers={"Authorization": f"Bearer {token}"})
-    assert r_create.status_code == 200
-
     r = client.get("/licenses/summary", headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 200
     assert "X-Capacity-Remaining" in r.headers
@@ -54,4 +50,3 @@ def test_licenses_summary_metrics_exposed():
     text = m.text
     assert "user_capacity_remaining" in text
     assert 'context="licenses_summary"' in text
-

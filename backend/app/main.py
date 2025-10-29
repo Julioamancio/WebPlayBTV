@@ -11,6 +11,7 @@ from app.routers.metrics import router as metrics_router
 from app.routers.epg import router as epg_router
 from app.routers.licenses import router as licenses_router
 from app.routers.audit import router as audit_router
+from app.routers.ui import router as ui_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -33,6 +34,7 @@ app.include_router(metrics_router)
 app.include_router(epg_router)
 app.include_router(licenses_router)
 app.include_router(audit_router)
+app.include_router(ui_router)
 
 ## Removido on_event(deprecated); usando Lifespan acima
 

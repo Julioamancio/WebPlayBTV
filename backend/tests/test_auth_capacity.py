@@ -14,6 +14,15 @@ create_db_and_tables()
 
 
 def test_login_returns_capacity_payload_for_fake_user():
+    # Cleanup de possíveis licenças/dispositivos do admin de execuções anteriores
+    with Session(engine) as session:
+        from sqlmodel import select
+        for d in session.exec(select(Device).where(Device.owner_username == "admin@example.com")).all():
+            session.delete(d)
+        for l in session.exec(select(License).where(License.owner_username == "admin@example.com")).all():
+            session.delete(l)
+        session.commit()
+
     r = client.post(
         "/auth/login",
         json={"username": "admin@example.com", "password": "admin123"},
