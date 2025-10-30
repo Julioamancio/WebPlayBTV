@@ -39,3 +39,15 @@ class AuditLog(SQLModel, table=True):
     details: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+
+class Playlist(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    owner_username: str = Field(index=True)
+    name: str
+    # tipo da lista: m3u ou hls (texto livre para flexibilidade)
+    type: str = Field(index=True)
+    url: str
+    epg_url: Optional[str] = None
+    active: bool = Field(default=False, index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+

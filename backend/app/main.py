@@ -16,6 +16,7 @@ from app.routers.licenses import router as licenses_router
 from app.routers.audit import router as audit_router
 from app.routers.ui import router as ui_router
 from app.routers.billing import router as billing_router
+from app.routers.playlists import router as playlists_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,6 +41,7 @@ app.include_router(licenses_router)
 app.include_router(audit_router)
 app.include_router(ui_router)
 app.include_router(billing_router)
+app.include_router(playlists_router)
 
 ## Removido on_event(deprecated); usando Lifespan acima
 
