@@ -512,11 +512,14 @@ def ui_catalog():
         } finally { try { netLoader.classList.add('hidden'); } catch {} }
       }
 
+      function normalizeString(s){
+        try { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); } catch { return String(s||'').toLowerCase(); }
+      }
       function classifyChannel(c){
-        const g = (c.group||'').toLowerCase();
-        const n = (c.name||'').toLowerCase();
-        if (/(movie|filme|movies|cinema|vod)/.test(g) || /(filme|movie|cinema|vod)/.test(n)) return 'movies';
-        if (/(series|serie|seriados|serial)/.test(g) || /(series|serie|epis[oó]dio|temporada)/.test(n)) return 'series';
+        const g = normalizeString(c.group||'');
+        const n = normalizeString(c.name||'');
+        if (/(movie|filme|filmes|movies|cinema|vod)/.test(g) || /(filme|filmes|movie|cinema|vod)/.test(n)) return 'movies';
+        if (/(series|serie|seriados|serial|series|seres)/.test(g) || /(series|serie|episodio|temporada)/.test(n)) return 'series';
         return 'live';
       }
       function buildCatsList(){
@@ -649,21 +652,17 @@ def ui_catalog():
       const playerStatus = document.getElementById('playerStatus');
       const playerTitle = document.getElementById('playerTitle');
       let shakaPlayer = null;
+      let hlsInstance = null;
 
       function isHls(url){ return /\.m3u8($|\?)/i.test(url); }
       function isDash(url){ return /\.mpd($|\?)/i.test(url); }
-      function normalizeStreamUrl(url){
-        try {
-          if (/\.ts(\?|$)/i.test(url)) return url.replace(/\.ts(\?|$)/i, '.m3u8$1');
-        } catch {}
-        return url;
-      }
+      function toProxy(url){ try { return '/catalog/proxy?url=' + encodeURIComponent(url); } catch { return url; } }
       function openPlayer(url, title){
         mini.classList.remove('hidden');
         backdrop.classList.add('hidden');
         playerTitle.textContent = title || 'Player';
         playerStatus.textContent = 'Carregando…';
-        playUrl(normalizeStreamUrl(url));
+        playUrl(toProxy(url));
       }
       function toggleExpand(force){
         const expand = typeof force === 'boolean' ? force : !mini.classList.contains('expanded');
@@ -672,6 +671,7 @@ def ui_catalog():
       }
       function closePlayer(){
         try { if (shakaPlayer) { shakaPlayer.destroy(); shakaPlayer = null; } } catch {}
+        try { if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; } } catch {}
         try {
           if (videoEl) { videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load(); }
         } catch {}
@@ -683,32 +683,34 @@ def ui_catalog():
       videoEl.addEventListener('dblclick', () => toggleExpand());
       backdrop.addEventListener('click', () => toggleExpand(false));
       async function playUrl(url){
-        // Prefer Shaka for DASH; fallback to HLS.js for HLS; else native
+        // Limpeza de players anteriores
+        try { if (shakaPlayer) { shakaPlayer.destroy(); shakaPlayer = null; } } catch {}
+        try { if (hlsInstance) { hlsInstance.destroy(); hlsInstance = null; } } catch {}
+        try { if (videoEl) { videoEl.pause(); videoEl.removeAttribute('src'); videoEl.load(); } } catch {}
+        // Prefer Shaka para DASH; preferir hls.js para HLS; senão nativo
         try {
-          if (isDash(url)) {
-            if (window.shaka) {
-              shakaPlayer = new shaka.Player(videoEl);
-              await shakaPlayer.load(url);
-              playerStatus.textContent = 'DASH carregado com Shaka';
-              return;
-            }
+          if (isDash(url) && window.shaka) {
+            shakaPlayer = new shaka.Player(videoEl);
+            await shakaPlayer.load(url);
+            playerStatus.textContent = 'DASH carregado (Shaka)';
+            return;
           }
           if (isHls(url)) {
-            const canNative = videoEl.canPlayType('application/vnd.apple.mpegurl');
-            if (canNative) {
-              videoEl.src = url; await videoEl.play(); playerStatus.textContent = 'HLS nativo'; return;
-            }
             if (window.Hls && Hls.isSupported()) {
-              const hls = new Hls(); hls.loadSource(url); hls.attachMedia(videoEl);
-              hls.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play(); playerStatus.textContent = 'HLS via hls.js'; });
-              hls.on(Hls.Events.ERROR, (_, data) => { playerStatus.textContent = 'HLS erro: ' + (data?.details || data?.type || ''); });
+              hlsInstance = new Hls();
+              hlsInstance.loadSource(url);
+              hlsInstance.attachMedia(videoEl);
+              hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play(); playerStatus.textContent = 'HLS via hls.js'; });
+              hlsInstance.on(Hls.Events.ERROR, (_, data) => { playerStatus.textContent = 'HLS erro: ' + (data?.details || data?.type || ''); });
               return;
             }
+            const canNative = videoEl.canPlayType('application/vnd.apple.mpegurl');
+            if (canNative) { videoEl.src = url; await videoEl.play(); playerStatus.textContent = 'HLS nativo'; return; }
           }
-          // Fallback: progressive (mp4, webm, etc.)
+          // Progressive (mp4, webm, etc.)
           videoEl.src = url; await videoEl.play(); playerStatus.textContent = 'Reprodução nativa';
         } catch (e) {
-          playerStatus.innerHTML = 'Falha ao reproduzir: ' + (e?.message || e) + ' — <a href="'+url+'" target="_blank" style="color:#fff;">abrir externamente</a>';
+          playerStatus.textContent = 'Falha ao reproduzir: ' + (e?.message || e);
         }
       }
     </script>

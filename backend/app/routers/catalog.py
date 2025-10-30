@@ -3,6 +3,9 @@ from typing import List, Optional
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi.responses import StreamingResponse
+from urllib.parse import urljoin, urlparse, quote
+import httpx
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 import hashlib
@@ -205,6 +208,86 @@ async def get_channels_enriched(
         raise HTTPException(status_code=404, detail=f"Fonte EPG não encontrada: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Proxy simples para HLS/DASH com cabeçalhos customizados
+@router.get("/proxy")
+async def stream_proxy(
+    request: Request,
+    url: str = Query(..., description="URL do recurso a ser proxyado (playlist .m3u8, .mpd ou segmento)"),
+    ua: str | None = Query(default=None, description="User-Agent a ser enviado"),
+    referer: str | None = Query(default=None, description="Referer a ser enviado"),
+    token: str | None = Query(default=None, description="Token a anexar como query na URL (opcional)"),
+):
+    try:
+        # Anexar token como query se fornecido
+        target = url
+        if token:
+            sep = '&' if ('?' in target) else '?'
+            target = f"{target}{sep}token={quote(token)}"
+
+        # Headers base
+        hdrs = {
+            'User-Agent': ua or 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36',
+            'Accept': 'application/vnd.apple.mpegurl,application/x-mpegURL,video/*;q=0.9,*/*;q=0.8',
+        }
+        # Propagar Range e outros headers relevantes
+        rng = request.headers.get('range')
+        if rng: hdrs['Range'] = rng
+        if referer:
+            hdrs['Referer'] = referer
+            # Alguns providers checam Origin também
+            try:
+                parsed = urlparse(referer)
+                origin = f"{parsed.scheme}://{parsed.netloc}"
+                hdrs['Origin'] = origin
+            } except Exception:
+                pass
+
+        async with httpx.AsyncClient(follow_redirects=True, timeout=httpx.Timeout(20.0)) as client:
+            resp = await client.get(target, headers=hdrs)
+            if resp.status_code >= 400:
+                raise HTTPException(status_code=resp.status_code, detail=f"Proxy falhou: {resp.text[:300]}")
+            ctype = resp.headers.get('content-type', '')
+            # Reescrever playlists HLS para que segmentos passem pelo proxy
+            if 'application/vnd.apple.mpegurl' in ctype or 'application/x-mpegURL' in ctype or target.lower().endswith('.m3u8'):
+                text = resp.text
+                base_url = str(resp.url)
+                base_dir = base_url.rsplit('/', 1)[0] + '/'
+                proxied = []
+                for line in text.splitlines():
+                    if line.startswith('#EXT-X-KEY') and 'URI=' in line:
+                        # Reescrever URI do KEY
+                        try:
+                            import re
+                            def repl(m):
+                                uri = m.group(1)
+                                absu = uri if uri.startswith('http') else urljoin(base_dir, uri)
+                                return f'URI="/catalog/proxy?url={quote(absu, safe="")}"'
+                            line = re.sub(r'URI="([^"]+)"', repl, line)
+                        except Exception:
+                            pass
+                        proxied.append(line)
+                    elif line.startswith('#') or not line.strip():
+                        proxied.append(line)
+                    else:
+                        # Linha de recurso (segmento ou playlist aninhada)
+                        absu = line if line.startswith('http') else urljoin(base_dir, line)
+                        proxied.append(f"/catalog/proxy?url={quote(absu, safe='')}" )
+                body = "\n".join(proxied)
+                return Response(content=body, media_type='application/vnd.apple.mpegurl')
+            # Caso geral: stream pass-through
+            headers = { 'Content-Type': ctype }
+            # Propagar content-length e accept-ranges quando disponíveis
+            cl = resp.headers.get('content-length')
+            if cl: headers['Content-Length'] = cl
+            ar = resp.headers.get('accept-ranges')
+            if ar: headers['Accept-Ranges'] = ar
+            return StreamingResponse(resp.aiter_bytes(), status_code=resp.status_code, headers=headers)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro no proxy: {e}")
 
 
 @router.get("/channels/enriched/me", response_model=List[EnrichedChannelResponse])
