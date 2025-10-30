@@ -261,9 +261,8 @@ def ui_catalog():
     }
     .brand .logo svg { width: 32px; height: 32px; fill: #fff; }
     .brand strong { font-size: 20px; }
-    .tabs { display: flex; gap: 30px; align-items: center; }
-    .tab { color: var(--muted); font-weight: 600; cursor: pointer; padding: 12px 0; font-size: 18px; }
-    .tab.active { color: #fff; border-bottom: 3px solid var(--tile); }
+    .tabs { display: none; }
+    .tab { display:none; }
     .searchbar { display: flex; gap: 15px; justify-content: flex-end; }
     .searchbar input { width: 280px; padding: 16px 20px; border-radius: 25px; border: 2px solid rgba(255,255,255,0.15); background: rgba(14,14,18,0.8); color: #fff; font-size: 18px; }
     .searchbar select { padding: 16px 20px; border-radius: 15px; border: 2px solid rgba(255,255,255,0.15); background: rgba(14,14,18,0.8); color: #fff; font-size: 18px; }
@@ -275,6 +274,7 @@ def ui_catalog():
     .sidebar .item:hover { color: #fff; border-color: rgba(255,255,255,0.18); }
     .sidebar .item .dot { width: 12px; height: 12px; background: var(--tile); border-radius: 50%; }
     .sidebar .item .count { margin-left: 8px; color: var(--muted); font-size: 12px; }
+    .sidebar select { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15); background: rgba(14,14,18,0.8); color: #fff; font-size: 16px; }
     .subcats { margin: 10px 0 14px 12px; }
     .subitem { padding: 10px 14px; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; color: var(--muted); cursor: pointer; margin-bottom: 8px; }
     .subitem:hover { border-color: rgba(255,255,255,0.18); color: #ffffff; }
@@ -394,13 +394,14 @@ def ui_catalog():
         </div>
         <strong>WEB Player JCTV</strong>
       </div>
-      <div class="tabs">
-        <div id="tabClasses" class="tab">Class</div>
-        <div id="tabLive" class="tab active">TV ao vivo</div>
-        <div id="tabMovies" class="tab">Filmes</div>
-        <div id="tabSeries" class="tab">Séries</div>
-      </div>
+      <div class="tabs"></div>
       <div class="searchbar">
+        <select id="categorySelect" aria-label="Categoria">
+          <option value="live">TV ao vivo</option>
+          <option value="movies">Filmes</option>
+          <option value="series">Séries</option>
+          <option value="all">Todos</option>
+        </select>
         <input id="searchInput" placeholder="procurar…" />
         <select id="groupFilter">
           <option value="">todos os grupos</option>
@@ -431,11 +432,25 @@ def ui_catalog():
         <div class="section">
           <div class="item">Categorias populares <span class="dot"></span></div>
           <div class="item">Favoritos</div>
-          <div class="item">DEMO VOD</div>
         </div>
         <div class="section">
           <div class="item">Pastas e categorias</div>
-          <div id="catsList" class="cats-list"></div>
+          <div style="margin-top:10px;">
+            <label class="muted" style="font-size:14px;">Categoria</label>
+            <select id="sidebarCategory">
+              <option value="all">Todos</option>
+              <option value="live">TV ao vivo</option>
+              <option value="movies">Filmes</option>
+              <option value="series">Séries</option>
+            </select>
+          </div>
+          <div style="margin-top:10px;">
+            <label class="muted" style="font-size:14px;">Subgrupo</label>
+            <select id="sidebarGroup">
+              <option value="">todos os grupos</option>
+            </select>
+          </div>
+          <div id="catsList" class="cats-list" style="display:none;"></div>
         </div>
       </aside>
       <main class="container">
@@ -455,20 +470,45 @@ def ui_catalog():
       const groupFilter = document.getElementById('groupFilter');
       const sortSelect = document.getElementById('sortSelect');
       const reload = document.getElementById('reload');
-      const tabs = {
-        classes: document.getElementById('tabClasses'),
-        live: document.getElementById('tabLive'),
-        movies: document.getElementById('tabMovies'),
-        series: document.getElementById('tabSeries'),
-      };
+      const categorySelect = document.getElementById('categorySelect');
+      // Dropdowns laterais (categoria e subgrupo)
+      const sidebarCategory = document.getElementById('sidebarCategory');
+      const sidebarGroup = document.getElementById('sidebarGroup');
       // Define a aba inicial a partir da query string (?tab=live|movies|series|classes)
       const params = new URLSearchParams(location.search);
-      const initialTab = (params.get('tab') || 'live').toLowerCase();
-      let currentCategory = ['live','movies','series','classes'].includes(initialTab) ? initialTab : 'live';
-      // Atualiza estado visual das abas conforme a aba inicial
-      Object.values(tabs).forEach(t => t.classList.remove('active'));
-      if (tabs[currentCategory]) { tabs[currentCategory].classList.add('active'); }
+      const initialTabRaw = (params.get('tab') || 'live').toLowerCase();
+      const initialTab = initialTabRaw === 'classes' ? 'all' : initialTabRaw;
+      let currentCategory = ['live','movies','series','all'].includes(initialTab) ? initialTab : 'live';
+      if (categorySelect) categorySelect.value = currentCategory;
+      if (sidebarCategory) sidebarCategory.value = currentCategory;
       let channels = [];
+      // Helpers para grupos por categoria
+      function normalizeString(s){
+        try { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); } catch { return String(s||'').toLowerCase(); }
+      }
+      function classifyChannel(c){
+        const g = normalizeString(c.group||'');
+        const n = normalizeString(c.name||'');
+        if (/(movie|filme|filmes|movies|cinema|vod)/.test(g) || /(filme|filmes|movie|cinema|vod)/.test(n)) return 'movies';
+        if (/(series|serie|seriados|serial|series|seres)/.test(g) || /(series|serie|episodio|temporada)/.test(n)) return 'series';
+        return 'live';
+      }
+      function uniqueGroups(arr){
+        return Array.from(new Set(arr.map(c => (c.group||'').trim()).filter(Boolean))).sort((a,b) => a.localeCompare(b));
+      }
+      function getGroupsByCategory(cat){
+        if (!Array.isArray(channels) || channels.length === 0) return [];
+        if (cat === 'all') return uniqueGroups(channels);
+        const items = channels.filter(c => classifyChannel(c) === cat);
+        return uniqueGroups(items);
+      }
+      function populateSidebarGroups(){
+        if (!sidebarGroup) return;
+        const groups = getGroupsByCategory(currentCategory);
+        sidebarGroup.innerHTML = '<option value="">todos os grupos</option>' + groups.map(g => `<option value="${String(g).toLowerCase()}">${g}</option>`).join('');
+        // manter sincronizado com o filtro superior
+        if (groupFilter) groupFilter.value = '';
+      }
 
       function showSkeleton(n = 8) {
         grid.innerHTML = Array.from({ length: n }).map(() => `
@@ -505,22 +545,12 @@ def ui_catalog():
             const groups = Array.from(new Set(channels.map(c => c.group).filter(Boolean))).sort((a,b) => String(a).localeCompare(String(b)));
             groupFilter.innerHTML = '<option value="">todos os grupos</option>' + groups.map(g => `<option value="${String(g).toLowerCase()}">${String(g)}</option>`).join('');
             buildCatsList();
+            populateSidebarGroups();
           } catch(e) { console.warn('falha ao popular grupos', e); }
           render();
         } catch (e) {
           grid.innerHTML = '<div class="empty-state">❌ Erro ao carregar canais: ' + (e?.message || e) + '</div>';
         } finally { try { netLoader.classList.add('hidden'); } catch {} }
-      }
-
-      function normalizeString(s){
-        try { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); } catch { return String(s||'').toLowerCase(); }
-      }
-      function classifyChannel(c){
-        const g = normalizeString(c.group||'');
-        const n = normalizeString(c.name||'');
-        if (/(movie|filme|filmes|movies|cinema|vod)/.test(g) || /(filme|filmes|movie|cinema|vod)/.test(n)) return 'movies';
-        if (/(series|serie|seriados|serial|series|seres)/.test(g) || /(series|serie|episodio|temporada)/.test(n)) return 'series';
-        return 'live';
       }
       function buildCatsList(){
         const el = document.getElementById('catsList');
@@ -528,7 +558,6 @@ def ui_catalog():
         if (!Array.isArray(channels) || channels.length === 0) { el.innerHTML = ''; return; }
         const byCat = { live: [], movies: [], series: [] };
         channels.forEach(c => { const cat = classifyChannel(c); byCat[cat].push(c); });
-        const uniqueGroups = arr => Array.from(new Set(arr.map(c => (c.group||'').trim()).filter(Boolean))).sort((a,b) => a.localeCompare(b));
         const liveGroups = uniqueGroups(byCat.live);
         const movieGroups = uniqueGroups(byCat.movies);
         const seriesGroups = uniqueGroups(byCat.series);
@@ -543,9 +572,13 @@ def ui_catalog():
           node.addEventListener('click', ev => {
             const cat = ev.currentTarget.getAttribute('data-cat');
             currentCategory = cat;
-            groupFilter.value = '';
-            Object.values(tabs).forEach(t => t.classList.remove('active'));
-            if (tabs[cat]) tabs[cat].classList.add('active');
+            if (groupFilter) groupFilter.value = '';
+            if (categorySelect) categorySelect.value = cat;
+            if (sidebarCategory) sidebarCategory.value = cat;
+            if (sidebarGroup) sidebarGroup.value = '';
+            populateSidebarGroups();
+            // refletir na URL para manter estado
+            try { const u = new URL(location.href); u.searchParams.set('tab', currentCategory); history.replaceState(null,'',u); } catch {}
             render();
           });
         });
@@ -555,9 +588,12 @@ def ui_catalog():
             const cat = ev.currentTarget.getAttribute('data-cat');
             const grp = ev.currentTarget.getAttribute('data-group');
             currentCategory = cat;
-            groupFilter.value = grp;
-            Object.values(tabs).forEach(t => t.classList.remove('active'));
-            if (tabs[cat]) tabs[cat].classList.add('active');
+            if (groupFilter) groupFilter.value = grp;
+            if (categorySelect) categorySelect.value = cat;
+            if (sidebarCategory) sidebarCategory.value = cat;
+            if (sidebarGroup) sidebarGroup.value = grp;
+            populateSidebarGroups();
+            try { const u = new URL(location.href); u.searchParams.set('tab', currentCategory); history.replaceState(null,'',u); } catch {}
             render();
           });
         });
@@ -572,10 +608,11 @@ def ui_catalog():
           if (!matchesQuery) return false;
           if (gf && group !== gf) return false;
           const cat = classifyChannel(c);
+          if (currentCategory === 'all') return true;
           if (currentCategory === 'live') return cat === 'live';
           if (currentCategory === 'movies') return cat === 'movies';
           if (currentCategory === 'series') return cat === 'series';
-          return true; // classes
+          return true;
         });
         const key = sortSelect?.value || 'name';
         items.sort((a,b) => {
@@ -635,15 +672,46 @@ def ui_catalog():
       searchInput.addEventListener('input', render);
       groupFilter.addEventListener('change', render);
       sortSelect.addEventListener('change', render);
-      Object.values(tabs).forEach(el => el.addEventListener('click', (ev) => {
-        Object.values(tabs).forEach(t => t.classList.remove('active'));
-        ev.currentTarget.classList.add('active');
-        if (ev.currentTarget === tabs.live) currentCategory = 'live';
-        else if (ev.currentTarget === tabs.movies) currentCategory = 'movies';
-        else if (ev.currentTarget === tabs.series) currentCategory = 'series';
-        else currentCategory = 'classes';
-        render();
-      }));
+      if (categorySelect) {
+        categorySelect.addEventListener('change', () => {
+          const v = (categorySelect.value || 'live').toLowerCase();
+          currentCategory = ['live','movies','series','all'].includes(v) ? v : 'live';
+          if (sidebarCategory) sidebarCategory.value = currentCategory;
+          if (groupFilter) groupFilter.value = '';
+          if (sidebarGroup) sidebarGroup.value = '';
+          populateSidebarGroups();
+          try { const u = new URL(location.href); u.searchParams.set('tab', currentCategory); history.replaceState(null,'',u); } catch {}
+          render();
+        });
+      }
+      if (sidebarCategory) {
+        sidebarCategory.addEventListener('change', () => {
+          const v = (sidebarCategory.value || 'live').toLowerCase();
+          currentCategory = ['live','movies','series','all'].includes(v) ? v : 'live';
+          if (categorySelect) categorySelect.value = currentCategory;
+          if (groupFilter) groupFilter.value = '';
+          if (sidebarGroup) sidebarGroup.value = '';
+          populateSidebarGroups();
+          try { const u = new URL(location.href); u.searchParams.set('tab', currentCategory); history.replaceState(null,'',u); } catch {}
+          render();
+        });
+      }
+      if (sidebarGroup) {
+        sidebarGroup.addEventListener('change', () => {
+          const v = (sidebarGroup.value || '').toLowerCase();
+          if (groupFilter) groupFilter.value = v;
+          render();
+        });
+      }
+      if (groupFilter) {
+        groupFilter.addEventListener('change', () => {
+          const v = (groupFilter.value || '').toLowerCase();
+          if (sidebarGroup) sidebarGroup.value = v;
+          render();
+        });
+      }
+      // garantir estado inicial
+      try { const u = new URL(location.href); u.searchParams.set('tab', currentCategory); history.replaceState(null,'',u); } catch {}
       loadChannels();
       /* Player logic: supports native, HLS via hls.js, DASH via Shaka */
       const mini = document.getElementById('miniPlayer');
@@ -656,7 +724,22 @@ def ui_catalog():
 
       function isHls(url){ return /\.m3u8($|\?)/i.test(url); }
       function isDash(url){ return /\.mpd($|\?)/i.test(url); }
-      function toProxy(url){ try { return '/catalog/proxy?url=' + encodeURIComponent(url); } catch { return url; } }
+      function toProxy(url){
+        try {
+          const params = new URLSearchParams();
+          // Não duplique encoding: deixe URLSearchParams fazer o encode
+          params.set('url', url);
+          // Configurações opcionais: referer, user-agent e token
+          let ref = null, ua = null, tk = null;
+          try { ref = localStorage.getItem('proxy_referer'); } catch {}
+          try { ua = localStorage.getItem('proxy_ua'); } catch {}
+          try { tk = localStorage.getItem('proxy_token'); } catch {}
+          if (ref) params.set('referer', ref);
+          if (ua) params.set('ua', ua);
+          if (tk) params.set('token', tk);
+          return '/catalog/proxy?' + params.toString();
+        } catch { return url; }
+      }
       function openPlayer(url, title){
         mini.classList.remove('hidden');
         backdrop.classList.add('hidden');
@@ -701,7 +784,12 @@ def ui_catalog():
               hlsInstance.loadSource(url);
               hlsInstance.attachMedia(videoEl);
               hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => { videoEl.play(); playerStatus.textContent = 'HLS via hls.js'; });
-              hlsInstance.on(Hls.Events.ERROR, (_, data) => { playerStatus.textContent = 'HLS erro: ' + (data?.details || data?.type || ''); });
+              hlsInstance.on(Hls.Events.ERROR, (_, data) => {
+                const code = data?.response?.code;
+                const url = data?.response?.url || data?.frag?.url || '';
+                const msg = (data?.details || data?.type || 'erro');
+                playerStatus.textContent = 'HLS erro: ' + msg + (code ? (' (status ' + code + ')') : '') + (url ? (' — ' + url) : '');
+              });
               return;
             }
             const canNative = videoEl.canPlayType('application/vnd.apple.mpegurl');

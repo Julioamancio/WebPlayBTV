@@ -4,13 +4,25 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from fastapi.responses import StreamingResponse
-from urllib.parse import urljoin, urlparse, quote
+from urllib.parse import urljoin, urlparse, quote, unquote
 import httpx
+import ssl
+import asyncio
+import socket
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 import hashlib
 
 from app.config import os as _os  # reuse loaded dotenv context
+from app.config import (
+    PROXY_DEFAULT_REFERER,
+    PROXY_DEFAULT_UA,
+    PROXY_ACCEPT_LANGUAGE,
+    PROXY_VERIFY_TLS,
+    PROXY_OUTBOUND_HTTP,
+    PROXY_OUTBOUND_HTTPS,
+    PROXY_TRUST_ENV,
+)
 from app.services.m3u import load_m3u_text, parse_m3u
 from app.services.catalog import get_enriched_channels, get_now
 from sqlmodel import Session, select
@@ -221,31 +233,157 @@ async def stream_proxy(
 ):
     try:
         # Anexar token como query se fornecido
-        target = url
+        target = url.strip()
+        # Corrigir URLs dupla-codificadas (ex.: https%253A%252F%252F...)
+        try:
+            if '%3a%2f%2f' in target.lower() or '%2f' in target.lower():
+                decoded = unquote(target)
+                if '://' in decoded:
+                    target = decoded
+        except Exception:
+            pass
         if token:
             sep = '&' if ('?' in target) else '?'
             target = f"{target}{sep}token={quote(token)}"
 
         # Headers base
         hdrs = {
-            'User-Agent': ua or 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36',
+            'User-Agent': ua or PROXY_DEFAULT_UA or 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36',
             'Accept': 'application/vnd.apple.mpegurl,application/x-mpegURL,video/*;q=0.9,*/*;q=0.8',
+            'Accept-Language': PROXY_ACCEPT_LANGUAGE or 'en-US,en;q=0.9',
+            'Connection': 'keep-alive',
+            'Pragma': 'no-cache',
+            'Cache-Control': 'no-cache',
+            # Some CDNs check these Chrome-derived hints; harmless to include
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Dest': 'video',
         }
         # Propagar Range e outros headers relevantes
         rng = request.headers.get('range')
         if rng: hdrs['Range'] = rng
-        if referer:
-            hdrs['Referer'] = referer
-            # Alguns providers checam Origin também
+        # Referer/Origin: usa query, ou fallback do .env; se ausente, infere por domínio
+        eff_referer = referer or PROXY_DEFAULT_REFERER
+        if not eff_referer:
             try:
-                parsed = urlparse(referer)
+                host = urlparse(target).netloc.lower()
+                tgt_lower = target.lower()
+                # Heurística: streams Xumo/Cinedigm exigem referer de xumo.tv
+                if ('cinedigm.com' in host and 'xumo' in tgt_lower) or ('xumo' in host):
+                    eff_referer = 'https://www.xumo.tv/'
+            except Exception:
+                pass
+        if eff_referer:
+            hdrs['Referer'] = eff_referer
+            try:
+                parsed = urlparse(eff_referer)
                 origin = f"{parsed.scheme}://{parsed.netloc}"
                 hdrs['Origin'] = origin
-            } except Exception:
+            except Exception:
                 pass
 
-        async with httpx.AsyncClient(follow_redirects=True, timeout=httpx.Timeout(20.0)) as client:
-            resp = await client.get(target, headers=hdrs)
+        # httpx >=0.28 remove 'proxies' e usa transport com proxy
+        transport = None
+        try:
+            proxy_url = None
+            low = target.lower()
+            if low.startswith('https') and PROXY_OUTBOUND_HTTPS:
+                proxy_url = PROXY_OUTBOUND_HTTPS
+            elif PROXY_OUTBOUND_HTTP:
+                proxy_url = PROXY_OUTBOUND_HTTP
+            if proxy_url:
+                transport = httpx.AsyncHTTPTransport(proxy=proxy_url)
+        except Exception:
+            transport = None
+        async with httpx.AsyncClient(
+            follow_redirects=True,
+            timeout=httpx.Timeout(20.0),
+            verify=PROXY_VERIFY_TLS,
+            transport=transport,
+            trust_env=PROXY_TRUST_ENV,
+        ) as client:
+            # Retry simples para falhas transitórias de rede/DNS
+            resp = None
+            last_err = None
+            for attempt in range(3):
+                try:
+                    resp = await client.get(target, headers=hdrs)
+                    break
+                except httpx.RequestError as e:
+                    last_err = e
+                    import asyncio
+                    await asyncio.sleep(0.5 * (attempt + 1))
+            if resp is None:
+                # Fallback: resolver DNS via resolvers públicos usando aiohttp
+                try:
+                    import aiohttp  # type: ignore
+                except Exception:
+                    raise HTTPException(status_code=500, detail=f"Proxy falhou (rede/DNS): {last_err}; e fallback DNS requer 'aiohttp' instalado.")
+
+                # Preparar SSL conforme configuração
+                ssl_ctx = ssl.create_default_context()
+                if not PROXY_VERIFY_TLS:
+                    ssl_ctx.check_hostname = False
+                    ssl_ctx.verify_mode = ssl.CERT_NONE
+
+                # Resolver com servidores públicos (Cloudflare + Google)
+                resolver = aiohttp.AsyncResolver(nameservers=["1.1.1.1", "8.8.8.8"])  # type: ignore
+                connector = aiohttp.TCPConnector(ssl=ssl_ctx, resolver=resolver)  # type: ignore
+                # Escolher proxy apropriado por esquema
+                proxy_url = None
+                if target.lower().startswith('https') and PROXY_OUTBOUND_HTTPS:
+                    proxy_url = PROXY_OUTBOUND_HTTPS
+                elif PROXY_OUTBOUND_HTTP:
+                    proxy_url = PROXY_OUTBOUND_HTTP
+                timeout = None
+                try:
+                    import aiohttp
+                    timeout = aiohttp.ClientTimeout(total=20)  # type: ignore
+                except Exception:
+                    timeout = None
+                async with aiohttp.ClientSession(connector=connector, trust_env=PROXY_TRUST_ENV, timeout=timeout) as session:  # type: ignore
+                    try:
+                        r = await session.get(target, headers=hdrs, allow_redirects=True, proxy=proxy_url)  # type: ignore
+                    except Exception as e:
+                        raise HTTPException(status_code=500, detail=f"Proxy falhou (DNS público): {e}")
+
+                    # Mapear para estrutura semelhante ao httpx Response
+                    status_code = r.status
+                    if status_code >= 400:
+                        body_preview = await r.text()
+                        raise HTTPException(status_code=status_code, detail=f"Proxy falhou: {body_preview[:300]}")
+                    ctype = r.headers.get('content-type', '')
+                    # Reescrever playlists HLS
+                    if 'application/vnd.apple.mpegurl' in ctype or 'application/x-mpegURL' in ctype or target.lower().endswith('.m3u8'):
+                        text = await r.text()
+                        base_url = str(r.url)
+                        base_dir = base_url.rsplit('/', 1)[0] + '/'
+                        proxied = []
+                        for line in text.splitlines():
+                            if line.startswith('#EXT-X-KEY') and 'URI=' in line:
+                                try:
+                                    import re
+                                    def repl(m):
+                                        uri = m.group(1)
+                                        absu = uri if uri.startswith('http') else urljoin(base_dir, uri)
+                                        return f'URI="/catalog/proxy?url={quote(absu, safe="")}"'
+                                    line2 = re.sub(r'URI="([^"]+)"', repl, line)
+                                    proxied.append(line2)
+                                except Exception:
+                                    proxied.append(line)
+                            elif line.startswith('#') or not line.strip():
+                                proxied.append(line)
+                            else:
+                                absu = line if line.startswith('http') else urljoin(base_dir, line)
+                                proxied.append(f"/catalog/proxy?url={quote(absu, safe='')}")
+                        body = "\n".join(proxied)
+                        return Response(content=body, media_type='application/vnd.apple.mpegurl')
+                    # Pass-through streaming
+                    headers = { 'Content-Type': ctype }
+                    cl = r.headers.get('content-length')
+                    if cl: headers['Content-Length'] = cl
+                    ar = r.headers.get('accept-ranges')
+                    if ar: headers['Accept-Ranges'] = ar
+                    return StreamingResponse(r.content.iter_chunked(65536), status_code=status_code, headers=headers)
             if resp.status_code >= 400:
                 raise HTTPException(status_code=resp.status_code, detail=f"Proxy falhou: {resp.text[:300]}")
             ctype = resp.headers.get('content-type', '')

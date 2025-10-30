@@ -48,3 +48,17 @@ RATE_LIMIT_WINDOW_SECONDS = int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60"))
 RATE_LIMIT_LOGIN_PER_WINDOW = int(os.getenv("RATE_LIMIT_LOGIN_PER_WINDOW", "30"))
 RATE_LIMIT_REFRESH_PER_WINDOW = int(os.getenv("RATE_LIMIT_REFRESH_PER_WINDOW", "60"))
 RATE_LIMIT_DEVICES_REGISTER_PER_WINDOW = int(os.getenv("RATE_LIMIT_DEVICES_REGISTER_PER_WINDOW", "30"))
+
+# Proxy defaults (opcional)
+PROXY_DEFAULT_REFERER = os.getenv("PROXY_DEFAULT_REFERER")
+PROXY_DEFAULT_UA = os.getenv("PROXY_DEFAULT_UA")
+PROXY_ACCEPT_LANGUAGE = os.getenv("PROXY_ACCEPT_LANGUAGE", "en-US,en;q=0.9")
+
+# Controle de verificação TLS para o proxy (true por padrão)
+_verify_raw = os.getenv("PROXY_VERIFY_TLS", "true").strip().lower()
+PROXY_VERIFY_TLS = _verify_raw in ("1", "true", "yes", "on")
+
+# Proxy de saída (opcional): define proxies para HTTP/HTTPS
+PROXY_OUTBOUND_HTTP = os.getenv("PROXY_OUTBOUND_HTTP")  # ex.: http://user:pass@proxy.local:3128
+PROXY_OUTBOUND_HTTPS = os.getenv("PROXY_OUTBOUND_HTTPS")  # ex.: http://user:pass@proxy.local:3128
+PROXY_TRUST_ENV = os.getenv("PROXY_TRUST_ENV", "true").strip().lower() in ("1", "true", "yes", "on")

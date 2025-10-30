@@ -3,6 +3,8 @@ uvicorn[standard]
 PyJWT
 sqlmodel
 httpx
+aiohttp
+aiodns
 prometheus-client
 xmltodict
 python-dotenv

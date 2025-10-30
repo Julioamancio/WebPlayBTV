@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.db import create_db_and_tables
@@ -31,6 +32,11 @@ app = FastAPI(title="WebPlay Backend", version="0.1.0", lifespan=lifespan)
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+# Redireciona a raiz para a página inicial da UI
+@app.get("/")
+def root():
+    return RedirectResponse(url="/ui/home")
 
 app.include_router(auth_router)
 app.include_router(devices_router)
